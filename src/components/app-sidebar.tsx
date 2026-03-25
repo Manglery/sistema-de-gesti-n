@@ -5,7 +5,6 @@ import {
   Package, 
   Repeat, 
   BarChart3, 
-  Settings,
   LogOut,
   Undo2,
   ShoppingCart,
@@ -26,7 +25,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 const menuItems = [

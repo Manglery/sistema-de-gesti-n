@@ -1,15 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { 
   AlertTriangle,
-  ArrowRight,
   Package,
-  Users,
-  Clock,
   TrendingUp,
-  Wallet,
-  Truck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 export function WelcomeCard() {
