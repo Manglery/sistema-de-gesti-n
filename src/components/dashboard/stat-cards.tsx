@@ -1,61 +1,40 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { 
+  Users, 
+  Clock, 
+  Truck, 
+  Wallet, 
+  TrendingUp, 
   AlertTriangle,
-  Package,
-  TrendingUp,
-  MapPin,
-  Ghost
+  ArrowRight,
+  Package
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuthStore } from "@/store/use-auth-store";
-import { DashboardData } from "@/lib/mock-data";
-const fadeInUp = {
-  initial: { opacity: 0, y: 15 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }
-};
 export function WelcomeCard() {
-  const userName = useAuthStore(s => s.userName);
-  const currentWarehouseId = useAuthStore(s => s.currentWarehouseId);
-  const warehouses = useAuthStore(s => s.warehouses);
-  const activeWarehouse = warehouses?.find(w => w.id === currentWarehouseId);
   return (
-    <motion.div {...fadeInUp}>
-      <Card className="bg-slate-900 text-white border-none shadow-2xl relative overflow-hidden h-full flex flex-col justify-center px-6 min-h-[180px] group transition-all duration-500 hover:shadow-red-900/10">
-        <div className="absolute -top-10 -right-10 p-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-700">
-          <Package className="w-64 h-64 rotate-12" />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 via-transparent to-transparent pointer-events-none" />
-        <div className="flex items-center gap-5 relative z-10">
-            <div className="size-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-white font-black text-2xl shadow-inner group-hover:scale-105 transition-transform">
-              {userName?.charAt(0) || 'U'}
-            </div>
-          <div>
-            <p className="text-[10px] text-red-500 uppercase font-black tracking-[0.25em] mb-1.5">SISTEMA ACCIONA WMS</p>
-            <h2 className="text-2xl font-black tracking-tight leading-none truncate max-w-[200px]">
-              Hola, {userName ? userName.split(' ')[0] : 'Usuario'}
-            </h2>
+    <Card className="bg-slate-900 text-white border-none shadow-xl relative overflow-hidden h-full flex flex-col justify-between">
+      <div className="absolute top-0 right-0 p-8 opacity-10">
+        <Package className="w-32 h-32 rotate-12" />
+      </div>
+      <CardHeader className="relative z-10 pb-2">
+        <CardTitle className="text-2xl font-bold">¡Hola de nuevo, Admin!</CardTitle>
+        <p className="text-slate-400 text-sm mt-1">Aquí tienes el resumen de hoy en el almacén central.</p>
+      </CardHeader>
+      <CardContent className="relative z-10">
+        <div className="flex items-center gap-4 mt-4">
+          <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+            <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Estado de Red</p>
+            <p className="text-xl font-bold text-green-400">Excelente</p>
+          </div>
+          <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+            <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Sincronización</p>
+            <p className="text-xl font-bold">Hace 2m</p>
           </div>
         </div>
-        <div className="mt-6 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm p-4 relative z-10 hover:bg-white/10 transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-lg bg-red-600 flex items-center justify-center text-white shadow-lg shadow-red-900/50">
-              <MapPin className="size-5" />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest leading-none mb-1">ACCESO ACTUAL</span>
-              <span className="text-sm font-bold text-white uppercase tracking-tight truncate">
-                {activeWarehouse?.name || 'Cargando...'}
-              </span>
-            </div>
-          </div>
-        </div>
-      </Card>
-    </motion.div>
+      </CardContent>
+    </Card>
   );
 }
 interface StatCardProps {
@@ -66,125 +45,76 @@ interface StatCardProps {
   trendType?: 'positive' | 'negative' | 'neutral';
   subtitle?: string;
   className?: string;
-  iconColor?: string;
-  isLoading?: boolean;
 }
-export function StatCard({ 
-  title, 
-  value, 
-  icon: Icon, 
-  trend, 
-  trendType = 'neutral', 
-  subtitle, 
-  className,
-  iconColor = "text-blue-600 bg-blue-50",
-  isLoading = false
-}: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, trend, trendType = 'neutral', subtitle, className }: StatCardProps) {
   return (
-    <motion.div {...fadeInUp} className="h-full">
-      <Card className={cn("hover-lift h-full border-slate-200 group bg-white shadow-sm overflow-hidden", className)}>
-        <CardHeader className="flex flex-row items-center justify-between pb-3 pt-6 px-6">
-          <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{title}</CardTitle>
-          <div className={cn("p-3 rounded-2xl transition-all duration-300 group-hover:rotate-12", iconColor)}>
-            <Icon className="w-5 h-5" />
+    <Card className={cn("hover:shadow-md transition-shadow", className)}>
+      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-tight">{title}</CardTitle>
+        <div className="p-2 bg-slate-50 rounded-lg">
+          <Icon className="w-4 h-4 text-slate-500" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold text-foreground">{value}</div>
+        {(trend || subtitle) && (
+          <div className="flex items-center gap-2 mt-1">
+            {trend && (
+              <span className={cn(
+                "text-xs font-semibold",
+                trendType === 'positive' && "text-green-600",
+                trendType === 'negative' && "text-red-600",
+                trendType === 'neutral' && "text-slate-500"
+              )}>
+                {trend}
+              </span>
+            )}
+            {subtitle && <span className="text-xs text-muted-foreground">{subtitle}</span>}
           </div>
-        </CardHeader>
-        <CardContent className="px-6 pb-6">
-          {isLoading ? (
-            <Skeleton className="h-10 w-32 mb-4" />
-          ) : (
-            <div className="text-4xl font-black text-slate-900 tracking-tighter leading-none mb-4 truncate">{value}</div>
-          )}
-          {(trend || subtitle) && (
-            <div className="flex items-center gap-2.5">
-              {trend && !isLoading && (
-                <span className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter",
-                  trendType === 'positive' && "text-emerald-600 bg-emerald-50 border border-emerald-100",
-                  trendType === 'negative' && "text-red-600 bg-red-50 border border-red-100 animate-pulse",
-                  trendType === 'neutral' && "text-slate-500 bg-slate-100 border border-slate-200"
-                )}>
-                  {trendType === 'positive' && <TrendingUp className="size-3" />}
-                  {trend}
-                </span>
-              )}
-              {subtitle && <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{subtitle}</span>}
-              {isLoading && <Skeleton className="h-4 w-20" />}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </motion.div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
-export function RestockAlertCard({ data, isLoading = false }: { data: DashboardData | null, isLoading?: boolean }) {
-  const alerts = data?.alerts || [];
+const restockItems = [
+  { id: 1, name: "Cable Coaxial RG6", stock: 12, min: 50 },
+  { id: 2, name: "Router 5G Enterprise", stock: 5, min: 20 },
+  { id: 3, name: "Conector RJ45 CAT7", stock: 85, min: 200 },
+];
+export function RestockAlertCard() {
   return (
-    <motion.div {...fadeInUp} className="h-full">
-      <Card className="h-full border-slate-200 shadow-sm overflow-hidden flex flex-col bg-white">
-        <CardHeader className="pb-4 bg-slate-50/50 border-b px-6 pt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={cn("p-2 rounded-xl", (alerts.length > 0 && !isLoading) ? "bg-red-50 text-red-600 animate-pulse" : "bg-slate-100 text-slate-400")}>
-                <AlertTriangle className="size-5" />
+    <Card className="h-full border-red-100 bg-red-50/30">
+      <CardHeader className="pb-3 border-b border-red-100/50">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-bold text-red-900 flex items-center gap-2 uppercase tracking-tighter">
+            <AlertTriangle className="w-4 h-4 text-red-600" />
+            Alertas de Reposición
+          </CardTitle>
+          <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">
+            {restockItems.length} Críticos
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-4 px-0">
+        <div className="space-y-1">
+          {restockItems.map((item) => (
+            <div key={item.id} className="flex items-center justify-between px-4 py-2 hover:bg-red-50 transition-colors group">
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-slate-800">{item.name}</span>
+                <span className="text-[10px] text-red-600 font-bold uppercase tracking-wider">Stock: {item.stock} / Min: {item.min}</span>
               </div>
-              <CardTitle className="text-sm font-black text-slate-900 uppercase tracking-tight">
-                Reposición Crítica
-              </CardTitle>
+              <button className="p-1.5 bg-white rounded-md border border-red-200 opacity-0 group-hover:opacity-100 transition-opacity">
+                <ArrowRight className="w-3.5 h-3.5 text-red-600" />
+              </button>
             </div>
-            {alerts.length > 0 && !isLoading && (
-              <Badge variant="destructive" className="bg-red-600 hover:bg-red-700 font-black text-[10px] px-2.5 py-1 rounded-lg border-none">
-                {alerts.length} ALERTAS
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="p-0 flex-1 overflow-auto max-h-[500px]">
-          {isLoading ? (
-            <div className="p-6 space-y-6">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
-            </div>
-          ) : alerts.length > 0 ? (
-            <div className="divide-y divide-slate-100">
-              {alerts.map((item) => (
-                <div key={item.id} className="p-6 hover:bg-slate-50 transition-colors group relative overflow-hidden">
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="flex justify-between items-start mb-4 gap-4">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-red-600 uppercase tracking-[0.15em] mb-1.5">{item.code}</span>
-                      <span className="text-xs font-black text-slate-800 leading-tight uppercase line-clamp-2">{item.name}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-3 mt-4">
-                    <div className="flex justify-between text-[10px] font-black uppercase tracking-tight">
-                      <span className="text-slate-400">Stock Actual</span>
-                      <span className={cn(item.current === 0 ? "text-red-600 font-black" : "text-slate-900")}>
-                        {item.current} / {item.min} uds
-                      </span>
-                    </div>
-                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div 
-                        className={cn("h-full transition-all duration-1000", item.current === 0 ? "bg-red-600" : "bg-red-500")} 
-                        style={{ width: `${Math.min((item.current / (item.min || 1)) * 100, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="p-12 text-center flex flex-col items-center justify-center gap-5 h-full opacity-60">
-              <div className="size-20 rounded-full bg-slate-50 flex items-center justify-center">
-                <Ghost className="size-10 text-slate-200" />
-              </div>
-              <div>
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Almacén Abastecido</p>
-                <p className="text-[10px] font-bold text-slate-300 uppercase mt-1">No hay alertas de reposición</p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </motion.div>
+          ))}
+        </div>
+        <div className="px-4 mt-4">
+          <button className="w-full py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-colors shadow-sm">
+            GESTIONAR TODO
+          </button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
