@@ -5,7 +5,18 @@ import { MovementChart, OperatorsChart } from '@/components/dashboard/dashboard-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Clock, Truck, Package, TrendingUp, Wallet, Calendar, Filter, Building2, Activity, ChevronRight } from "lucide-react";
+import { 
+  Package, 
+  Users, 
+  Clock, 
+  Truck, 
+  TrendingUp, 
+  Wallet, 
+  Calendar, 
+  Building2, 
+  Activity, 
+  ChevronRight 
+} from "lucide-react";
 import { useAuthStore } from '@/store/use-auth-store';
 import { useActivityStore } from '@/store/use-activity-store';
 import { useWarehouseData } from '@/hooks/use-warehouse-data';
@@ -13,6 +24,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
+const MESES = [
+  { value: "enero", label: "Enero" },
+  { value: "febrero", label: "Febrero" },
+  { value: "marzo", label: "Marzo" },
+  { value: "abril", label: "Abril" },
+  { value: "mayo", label: "Mayo" },
+  { value: "junio", label: "Junio" },
+  { value: "julio", label: "Julio" },
+  { value: "agosto", label: "Agosto" },
+  { value: "septiembre", label: "Septiembre" },
+  { value: "octubre", label: "Octubre" },
+  { value: "noviembre", label: "Noviembre" },
+  { value: "diciembre", label: "Diciembre" },
+];
+const ANIOS = ["2024", "2025", "2026"];
 export function HomePage() {
   const role = useAuthStore(s => s.role);
   const currentWarehouseId = useAuthStore(s => s.currentWarehouseId);
@@ -50,14 +76,40 @@ export function HomePage() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                <div className="px-3 py-1 flex items-center gap-2 border-r border-slate-100">
+                  <Calendar className="size-4 text-slate-400" />
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Periodo</span>
+                </div>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-[110px] h-9 text-[11px] font-black uppercase border-none focus:ring-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MESES.map(m => (
+                      <SelectItem key={m.value} value={m.value} className="text-xs font-bold uppercase">{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-[80px] h-9 text-[11px] font-black uppercase border-none focus:ring-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ANIOS.map(a => (
+                      <SelectItem key={a} value={a} className="text-xs font-bold uppercase">{a}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               {role === 'admin' && (
-                <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm mr-2">
+                <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
                   <div className="px-3 py-1 flex items-center gap-2 border-r border-slate-100">
                     <Building2 className="size-4 text-slate-400" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Almacén</span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sede</span>
                   </div>
                   <Select value={currentWarehouseId} onValueChange={setWarehouseId}>
-                    <SelectTrigger className="w-[180px] h-9 text-[11px] font-black uppercase border-none focus:ring-0">
+                    <SelectTrigger className="w-[160px] h-9 text-[11px] font-black uppercase border-none focus:ring-0">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

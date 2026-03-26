@@ -82,3 +82,31 @@ export const WAREHOUSE_DATA: Record<string, DashboardData> = {
     ]
   }
 };
+/**
+ * Utility to generate slight deterministic variations of data based on 
+ * month/year parameters to simulate "live" data.
+ */
+export function getVaryingData(base: DashboardData, month: string, year: string): DashboardData {
+  // Use length of strings as a simple deterministic seed
+  const seed = month.length + year.length;
+  const factor = (seed % 10) / 100 + 0.95; // Vary between 0.95 and 1.05
+  return {
+    ...base,
+    stats: {
+      ...base.stats,
+      usuarios: Math.floor(base.stats.usuarios * factor),
+      pendientes: Math.max(0, base.stats.pendientes + (seed % 3)),
+      despachos: Math.floor(base.stats.despachos * factor),
+      efectividad: (parseFloat(base.stats.efectividad) * factor).toFixed(1) + "%"
+    },
+    movement: base.movement.map(m => ({
+      ...m,
+      cantidad: Math.floor(m.cantidad * factor),
+      valor: Math.floor(m.valor * factor)
+    })),
+    operators: base.operators.map(o => ({
+      ...o,
+      valor: Math.floor(o.valor * factor)
+    }))
+  };
+}

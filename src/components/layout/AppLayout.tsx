@@ -35,15 +35,18 @@ export function AppLayout({ children, container = false, className, contentClass
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <CommandMenu />
-      <SidebarInset className={cn("relative", className)}>
+      <SidebarInset className={cn("relative overflow-hidden flex flex-col", className)}>
+        {/* Superior accent bar - Absolute within content area */}
         <div className={cn(
-          "h-1.5 w-full fixed top-0 left-0 right-0 z-[60] transition-all duration-500", 
+          "h-1.5 w-full absolute top-0 left-0 right-0 z-50 transition-all duration-500", 
           accentColor,
           isSyncing && "animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]"
         )} />
-        <div className="absolute left-4 top-4 z-20 md:hidden">
+        {/* Mobile Menu Trigger */}
+        <div className="absolute left-4 top-4 z-40 md:hidden">
           <SidebarTrigger />
         </div>
+        {/* Floating Context Headers - Desktop Only */}
         <div className="hidden md:flex absolute top-1.5 right-8 h-10 items-center gap-4 z-40">
           <button 
             className="flex items-center gap-2 px-3 py-1 bg-white/90 backdrop-blur rounded-b-lg border-x border-b border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
@@ -67,7 +70,7 @@ export function AppLayout({ children, container = false, className, contentClass
           </div>
         </div>
         <main className={cn(
-          "min-h-screen flex flex-col pt-4 transition-opacity duration-300",
+          "flex-1 flex flex-col pt-8 pb-12 transition-opacity duration-300",
           isSyncing ? "opacity-90" : "opacity-100",
           container && "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
           contentClassName
