@@ -11,6 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Search, 
   Filter, 
@@ -21,11 +22,13 @@ import {
   CheckCircle2,
   XCircle
 } from 'lucide-react';
-import { INVENTORY_MOCK, InventoryItem } from '@/lib/inventory-data';
+import { InventoryItem } from '@/lib/inventory-data';
+import { useInventoryData } from '@/hooks/use-inventory-data';
 import { cn } from '@/lib/utils';
 export function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const filteredItems = INVENTORY_MOCK.filter(item => 
+  const { items, isLoading } = useInventoryData();
+  const filteredItems = items.filter(item => 
     item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -92,7 +95,15 @@ export function InventoryPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredItems.length > 0 ? (
+                  {isLoading ? (
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <TableRow key={idx}>
+                        {Array.from({ length: 7 }).map((_, j) => (
+                          <TableCell key={j}><Skeleton className="h-6 w-full" /></TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : filteredItems.length > 0 ? (
                     filteredItems.map((item) => (
                       <TableRow key={item.id} className="hover:bg-slate-50/80 transition-colors border-slate-100">
                         <TableCell className="text-xs font-black text-red-600">{item.code}</TableCell>
@@ -106,12 +117,12 @@ export function InventoryPage() {
                             <span className="text-[9px] font-bold text-slate-400 uppercase">Mín: {item.minStock}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-[10px] font-black text-slate-600 uppercase bg-slate-100 rounded inline-flex px-2 py-1 mt-2 mb-2 ml-4">
-                          {item.location}
-                        </TableCell>
                         <TableCell>
-                          {getStatusBadge(item.status)}
+                          <span className="text-[10px] font-black text-slate-600 uppercase bg-slate-100 px-2 py-1 rounded">
+                            {item.location}
+                          </span>
                         </TableCell>
+                        <TableCell>{getStatusBadge(item.status)}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="sm" className="text-xs font-bold text-slate-400 hover:text-slate-900">
                             Ver Detalle
@@ -131,13 +142,6 @@ export function InventoryPage() {
                   )}
                 </TableBody>
               </Table>
-            </div>
-            <div className="p-4 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mostrando {filteredItems.length} de {INVENTORY_MOCK.length} items</span>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled className="text-[10px] font-bold uppercase">Anterior</Button>
-                <Button variant="outline" size="sm" disabled className="text-[10px] font-bold uppercase">Siguiente</Button>
-              </div>
             </div>
           </div>
         </div>

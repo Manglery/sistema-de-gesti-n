@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { 
   Card, 
@@ -25,6 +25,7 @@ import {
   MapPin, 
   Users, 
   ArrowRight,
+  ShieldCheck,
   CheckCircle2
 } from 'lucide-react';
 import { useAuthStore } from '@/store/use-auth-store';
@@ -153,9 +154,11 @@ export function WarehousesPage() {
                         )}
                       >
                         {isActive ? (
-                          <span className="flex items-center gap-2">
-                            <CheckCircle2 className="size-4" /> Almacén en uso
-                          </span>
+                          <>
+                            <span className="flex items-center gap-2">
+                              <CheckCircle2 className="size-4" /> Almacén en uso
+                            </span>
+                          </>
                         ) : (
                           <>
                             Seleccionar Almacén

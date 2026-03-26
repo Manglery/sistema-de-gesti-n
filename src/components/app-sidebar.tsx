@@ -16,7 +16,8 @@ import {
   ChevronRight,
   ShieldCheck,
   User as UserIcon,
-  Wrench
+  Wrench,
+  Building2
 } from "lucide-react";
 import {
   Sidebar,
@@ -41,7 +42,7 @@ const allMenuItems = [
   { title: "Movimientos", icon: Repeat, roles: ['admin'], url: '/movements' },
   { title: "Reportes", icon: BarChart3, roles: ['admin', 'almacenero'], url: '/reports' },
   { title: "Reportes Data", icon: DatabaseZap, roles: ['admin', 'almacenero'], url: '/data-reports' },
-  { title: "Tablas Maestras", icon: Database, roles: ['admin'], url: '/tables' },
+  { title: "Almacenes", icon: Building2, roles: ['admin'], url: '/warehouses' },
   { title: "Usuarios", icon: UsersIcon, roles: ['admin'], url: '/users' },
 ];
 export function AppSidebar(): JSX.Element {
@@ -111,15 +112,17 @@ export function AppSidebar(): JSX.Element {
           </div>
         </div>
         <div className="px-4 mb-4">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-2.5">
-            <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1">ALMACÉN ACTIVO</p>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-slate-900 truncate pr-2">{activeWarehouse?.name || 'Sin almacén'}</span>
-              <div className="size-4 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                <ChevronRight className="size-2.5 text-red-600" />
+          <Link to="/warehouses" className="block">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-2.5 transition-colors hover:bg-red-100">
+              <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1">ALMACÉN ACTIVO</p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-slate-900 truncate pr-2">{activeWarehouse?.name || 'Sin almacén'}</span>
+                <div className="size-4 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <ChevronRight className="size-2.5 text-red-600" />
+                </div>
               </div>
             </div>
-          </div>
+          </Link>
         </div>
         <SidebarGroup className="pt-0">
           <SidebarMenu className="px-2 gap-1">
