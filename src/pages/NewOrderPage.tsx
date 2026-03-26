@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   PlusCircle, 
   Search, 
@@ -21,6 +21,7 @@ import { useInventoryData } from '@/hooks/use-inventory-data';
 import { useOrderStore } from '@/store/use-order-store';
 import { useAuthStore } from '@/store/use-auth-store';
 import { Order, OrderItem } from '@/lib/orders-data';
+import { InventoryItem } from '@/lib/inventory-data';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 export function NewOrderPage() {
@@ -36,15 +37,22 @@ export function NewOrderPage() {
     item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  const addItem = (invItem: OrderItem & { stock: number }) => {
+  const addItem = (invItem: InventoryItem) => {
     const existing = selectedItems.find(i => i.id === invItem.id);
     if (existing) {
       const newQty = Math.min(existing.quantity + 1, invItem.stock);
-      if (newQty === existing.quantity) return;
+      if (newQty === existing.quantity) {
+        toast.warning("Stock máximo alcanzado");
+        return;
+      }
       setSelectedItems(selectedItems.map(i => 
         i.id === invItem.id ? { ...i, quantity: newQty } : i
       ));
     } else {
+      if (invItem.stock <= 0) {
+        toast.error("Artículo sin existencias");
+        return;
+      }
       setSelectedItems([...selectedItems, {
         id: invItem.id,
         code: invItem.code,
@@ -59,15 +67,18 @@ export function NewOrderPage() {
   };
   const updateQuantity = (id: string, qty: number) => {
     if (qty < 1) return;
-    const item = inventory.find(i => i.id === id);
-    const maxQty = item ? item.stock : Infinity;
+    const invItem = inventory.find(i => i.id === id);
+    const maxQty = invItem ? invItem.stock : Infinity;
     const safeQty = Math.min(qty, maxQty);
     setSelectedItems(selectedItems.map(i => 
       i.id === id ? { ...i, quantity: safeQty } : i
     ));
+    if (qty > maxQty) {
+      toast.warning(`Cantidad limitada al stock disponible (${maxQty})`);
+    }
   };
   const handleSubmit = () => {
-    if (!customerName) {
+    if (!customerName.trim()) {
       toast.error("Por favor, ingrese el nombre del solicitante");
       return;
     }
@@ -79,7 +90,7 @@ export function NewOrderPage() {
       id: uuidv4(),
       orderNumber: `PED-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
       warehouseId: currentWarehouseId,
-      customerName,
+      customerName: customerName.trim(),
       items: selectedItems,
       status: 'PENDING',
       createdAt: new Date().toISOString(),
@@ -123,7 +134,17 @@ export function NewOrderPage() {
               <CardContent className="p-0 flex-1">
                 <ScrollArea className="h-[500px]">
                   {isLoading ? (
-                    <div className="p-10 text-center text-slate-400 text-xs font-bold">Cargando inventario...</div>
+                    <div className="p-5 space-y-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="flex gap-4">
+                          <Skeleton className="size-10 rounded-lg" />
+                          <div className="space-y-2 flex-1">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-4 w-full" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   ) : filteredInventory.length > 0 ? (
                     <div className="divide-y divide-slate-100">
                       {filteredInventory.map(item => (

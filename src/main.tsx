@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
+// Operation and Management Views
 import { HomePage } from '@/pages/HomePage'
 import { InventoryPage } from '@/pages/InventoryPage'
 import { WarehousesPage } from '@/pages/WarehousesPage'
@@ -22,21 +23,18 @@ import { ReturnsPage } from '@/pages/ReturnsPage'
 import { PurchasesPage } from '@/pages/PurchasesPage'
 import { UsersPage } from '@/pages/UsersPage'
 import { SupportPage } from '@/pages/SupportPage'
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 const router = createBrowserRouter([
   {
     path: "/",
     element: <HomePage />,
-    errorElement: <RouteErrorBoundary />,
-  },
-  {
-    path: "/inventory",
-    element: <InventoryPage />,
-    errorElement: <RouteErrorBoundary />,
-  },
-  {
-    path: "/warehouses",
-    element: <WarehousesPage />,
     errorElement: <RouteErrorBoundary />,
   },
   {
@@ -47,6 +45,16 @@ const router = createBrowserRouter([
   {
     path: "/dispatch",
     element: <DispatchPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/inventory",
+    element: <InventoryPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/warehouses",
+    element: <WarehousesPage />,
     errorElement: <RouteErrorBoundary />,
   },
   {

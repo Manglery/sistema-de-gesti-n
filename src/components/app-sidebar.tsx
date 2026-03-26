@@ -11,12 +11,12 @@ import {
   Users as UsersIcon,
   LifeBuoy,
   Moon,
-  DatabaseZap,
   ChevronRight,
   ShieldCheck,
   User as UserIcon,
   Wrench,
-  Building2
+  Building2,
+  LogOut
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,6 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
 import { useTheme } from "@/hooks/use-theme";
+import { toast } from "sonner";
 const allMenuItems = [
   { title: "Dashboard", icon: LayoutDashboard, roles: ['admin', 'almacenero', 'operario'], url: '/' },
   { title: "Nuevo Pedido", icon: PlusCircle, roles: ['admin', 'almacenero', 'operario'], url: '/new' },
@@ -40,7 +41,6 @@ const allMenuItems = [
   { title: "Stock & Kardex", icon: Package, roles: ['admin', 'almacenero'], url: '/inventory' },
   { title: "Movimientos", icon: Repeat, roles: ['admin'], url: '/movements' },
   { title: "Reportes", icon: BarChart3, roles: ['admin', 'almacenero'], url: '/reports' },
-  { title: "Reportes Data", icon: DatabaseZap, roles: ['admin', 'almacenero'], url: '/data-reports' },
   { title: "Almacenes", icon: Building2, roles: ['admin'], url: '/warehouses' },
   { title: "Usuarios", icon: UsersIcon, roles: ['admin'], url: '/users' },
 ];
@@ -54,6 +54,9 @@ export function AppSidebar(): JSX.Element {
   const { toggleTheme } = useTheme();
   const activeWarehouse = warehouses?.find(w => w.id === currentWarehouseId);
   const filteredItems = allMenuItems.filter(item => item.roles.includes(role));
+  const handleLogout = () => {
+    toast.info("Cerrando sesión... Redirigiendo al login.");
+  };
   return (
     <Sidebar className="border-r border-border bg-white dark:bg-zinc-950">
       <SidebarHeader className="h-16 flex items-center justify-between border-b px-4">
@@ -147,7 +150,7 @@ export function AppSidebar(): JSX.Element {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t bg-slate-50/50">
+      <SidebarFooter className="p-4 border-t bg-slate-50/50 flex flex-col gap-3">
         <div className="flex items-center gap-3">
           <div className="size-9 rounded-full bg-slate-900 flex items-center justify-center text-white font-black text-xs">
             {userName.charAt(0) || 'U'}
@@ -157,6 +160,12 @@ export function AppSidebar(): JSX.Element {
             <span className="text-[9px] text-red-600 truncate font-bold uppercase tracking-widest">{role}</span>
           </div>
         </div>
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-3 py-1.5 text-slate-500 hover:text-red-600 transition-colors text-[10px] font-black uppercase tracking-widest"
+        >
+          <LogOut className="size-3.5" /> Cerrar Sesión
+        </button>
       </SidebarFooter>
     </Sidebar>
   );
