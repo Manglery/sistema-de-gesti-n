@@ -13,6 +13,7 @@ interface AuthState {
   currentWarehouseId: string;
   warehouses: Warehouse[];
   userName: string;
+  lastUpdated: string;
   setRole: (role: UserRole) => void;
   setWarehouseId: (id: string) => void;
   fetchWarehouses: () => Promise<void>;
@@ -23,14 +24,21 @@ export const useAuthStore = create<AuthState>((set) => ({
   userName: 'Mangler Yerren',
   currentWarehouseId: 'contadores',
   warehouses: [],
+  lastUpdated: new Date().toISOString(),
   setRole: (role) => set({ role }),
-  setWarehouseId: (currentWarehouseId) => set({ currentWarehouseId }),
+  setWarehouseId: (currentWarehouseId) => set({ 
+    currentWarehouseId,
+    lastUpdated: new Date().toISOString()
+  }),
   fetchWarehouses: async () => {
     try {
       const response = await fetch('/api/warehouses');
       const result = await response.json();
       if (result.success) {
-        set({ warehouses: result.data });
+        set({ 
+          warehouses: result.data,
+          lastUpdated: new Date().toISOString()
+        });
       }
     } catch (err) {
       console.error('Fetch warehouses failed', err);
@@ -46,7 +54,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const result = await response.json();
       if (result.success) {
         set((state) => ({ 
-          warehouses: [...state.warehouses, warehouse] 
+          warehouses: [...state.warehouses, warehouse],
+          lastUpdated: new Date().toISOString()
         }));
       }
     } catch (err) {

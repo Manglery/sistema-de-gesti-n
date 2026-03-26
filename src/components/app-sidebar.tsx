@@ -1,41 +1,17 @@
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  LayoutDashboard, 
-  PlusCircle, 
-  Truck, 
-  Package, 
-  Repeat, 
-  BarChart3, 
-  Undo2,
-  ShoppingCart,
-  Users as UsersIcon,
-  LifeBuoy,
-  Moon,
-  ChevronRight,
-  ShieldCheck,
-  User as UserIcon,
-  Wrench,
-  Building2,
-  LogOut
+  LayoutDashboard, PlusCircle, Truck, Package, Repeat, BarChart3, Undo2, ShoppingCart, 
+  Users as UsersIcon, ChevronRight, ShieldCheck, User as UserIcon, Wrench, Building2, LogOut, Loader2 
 } from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
-import { useTheme } from "@/hooks/use-theme";
+import { useInventoryStore } from "@/store/use-inventory-store";
 import { toast } from "sonner";
 const allMenuItems = [
   { title: "Dashboard", icon: LayoutDashboard, roles: ['admin', 'almacenero', 'operario'], url: '/' },
   { title: "Nuevo Pedido", icon: PlusCircle, roles: ['admin', 'almacenero', 'operario'], url: '/new' },
-  { title: "Despachar Pedido", icon: Truck, roles: ['admin', 'almacenero'], url: '/dispatch' },
+  { title: "Despachar", icon: Truck, roles: ['admin', 'almacenero'], url: '/dispatch' },
   { title: "Devoluciones", icon: Undo2, roles: ['admin', 'almacenero'], url: '/returns' },
   { title: "Compras", icon: ShoppingCart, roles: ['admin'], url: '/purchases' },
   { title: "Stock & Kardex", icon: Package, roles: ['admin', 'almacenero'], url: '/inventory' },
@@ -51,22 +27,23 @@ export function AppSidebar(): JSX.Element {
   const setRole = useAuthStore(s => s.setRole);
   const currentWarehouseId = useAuthStore(s => s.currentWarehouseId);
   const warehouses = useAuthStore(s => s.warehouses);
-  const { toggleTheme } = useTheme();
+  const isSyncing = useInventoryStore(s => s.isLoading);
   const activeWarehouse = warehouses?.find(w => w.id === currentWarehouseId);
   const filteredItems = allMenuItems.filter(item => item.roles.includes(role));
-  const handleLogout = () => {
-    toast.info("Cerrando sesión... Redirigiendo al login.");
+  const handleRoleChange = (newRole: string) => {
+    setRole(newRole);
+    toast.success(`Perfil cambiado a ${newRole.toUpperCase()}`);
   };
   return (
-    <Sidebar className="border-r border-border bg-white dark:bg-zinc-950">
-      <SidebarHeader className="h-16 flex items-center justify-between border-b px-4">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-red-600 flex items-center justify-center text-white">
+    <Sidebar className="border-r border-slate-200 bg-white dark:bg-zinc-950">
+      <SidebarHeader className="h-16 flex items-center border-b px-4">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-red-600 flex items-center justify-center text-white shadow-lg shadow-red-100">
             <Package className="size-5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-black tracking-tight text-foreground leading-none">ACCIONA</span>
-            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold">Logistics WMS</span>
+            <span className="text-sm font-black tracking-tight text-slate-900 leading-none">ACCIONA</span>
+            <span className="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Logistics WMS</span>
           </div>
         </div>
       </SidebarHeader>
@@ -81,7 +58,7 @@ export function AppSidebar(): JSX.Element {
                     asChild 
                     isActive={isActive}
                     className={cn(
-                      "h-9 px-3 transition-colors font-bold text-xs uppercase tracking-tight",
+                      "h-9 px-3 transition-colors font-bold text-xs uppercase",
                       isActive 
                         ? "bg-red-50 text-red-600 hover:bg-red-100" 
                         : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
@@ -98,73 +75,42 @@ export function AppSidebar(): JSX.Element {
           </SidebarMenu>
         </SidebarGroup>
         <div className="mt-auto px-4 mb-4">
-          <div className="rounded-lg border border-slate-200 bg-slate-50 dark:bg-zinc-900 dark:border-zinc-800 p-3">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">SIMULADOR DE PERFIL</p>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">PERFILES</p>
+              {isSyncing && <Loader2 className="size-3 text-red-600 animate-spin" />}
+            </div>
             <div className="flex flex-col gap-1.5">
-              <button onClick={() => setRole('admin')} className={cn("flex items-center gap-2 px-2 py-1.5 rounded text-[10px] font-bold uppercase transition-colors", role === 'admin' ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-400")}>
-                <ShieldCheck className="size-3" /> Administrador
-              </button>
-              <button onClick={() => setRole('almacenero')} className={cn("flex items-center gap-2 px-2 py-1.5 rounded text-[10px] font-bold uppercase transition-colors", role === 'almacenero' ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-400")}>
-                <Wrench className="size-3" /> Almacenero
-              </button>
-              <button onClick={() => setRole('operario')} className={cn("flex items-center gap-2 px-2 py-1.5 rounded text-[10px] font-bold uppercase transition-colors", role === 'operario' ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-400")}>
-                <UserIcon className="size-3" /> Operario
-              </button>
+              {[ {id: 'admin', icon: ShieldCheck, label: 'Admin'}, {id: 'almacenero', icon: Wrench, label: 'Almacenero'}, {id: 'operario', icon: UserIcon, label: 'Operario'} ].map(r => (
+                <button key={r.id} onClick={() => handleRoleChange(r.id)} className={cn("flex items-center gap-2 px-2 py-1.5 rounded text-[10px] font-bold uppercase transition-all", role === r.id ? "bg-slate-900 text-white shadow-md" : "bg-white border text-slate-600 hover:bg-slate-100")}>
+                  <r.icon className="size-3" /> {r.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
         <div className="px-4 mb-4">
-          <Link to="/warehouses" className="block">
-            <div className="rounded-lg border border-red-200 bg-red-50 p-2.5 transition-colors hover:bg-red-100">
-              <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1">ALMACÉN ACTIVO</p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-slate-900 truncate pr-2">{activeWarehouse?.name || 'Sin almacén'}</span>
-                <div className="size-4 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                  <ChevronRight className="size-2.5 text-red-600" />
-                </div>
-              </div>
+          <Link to="/warehouses" className={cn("block rounded-xl border p-3 transition-all", isSyncing ? "border-red-200 bg-red-50 animate-pulse" : "border-slate-200 bg-white hover:bg-slate-50")}>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">ALMACÉN ACTIVO</p>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-slate-900 truncate pr-2 uppercase">{activeWarehouse?.name || 'Seleccione...'}</span>
+              <ChevronRight className="size-3.5 text-slate-400" />
             </div>
           </Link>
         </div>
-        <SidebarGroup className="pt-0">
-          <SidebarMenu className="px-2 gap-1">
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild className="h-9 px-3 text-slate-600 hover:bg-slate-50 text-xs font-bold">
-                <Link to="/support" className="flex items-center gap-3">
-                  <LifeBuoy className="size-4 text-slate-400" />
-                  <span>Soporte</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                onClick={toggleTheme}
-                className="h-9 px-3 text-slate-600 hover:bg-slate-50 text-xs font-bold w-full text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <Moon className="size-4 text-slate-400" />
-                  <span>Modo Oscuro</span>
-                </div>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-4 border-t bg-slate-50/50 flex flex-col gap-3">
         <div className="flex items-center gap-3">
-          <div className="size-9 rounded-full bg-slate-900 flex items-center justify-center text-white font-black text-xs">
-            {userName.charAt(0) || 'U'}
+          <div className="size-9 rounded-full bg-slate-900 flex items-center justify-center text-white font-black text-xs shadow-md">
+            {userName ? userName.charAt(0) : '?'}
           </div>
           <div className="flex flex-col flex-1 min-w-0">
-            <span className="text-xs font-black text-slate-900 truncate">{userName}</span>
-            <span className="text-[9px] text-red-600 truncate font-bold uppercase tracking-widest">{role}</span>
+            <span className="text-xs font-black text-slate-900 truncate uppercase">{userName}</span>
+            <span className="text-[9px] text-red-600 font-bold uppercase tracking-widest">{role}</span>
           </div>
         </div>
-        <button 
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-3 py-1.5 text-slate-500 hover:text-red-600 transition-colors text-[10px] font-black uppercase tracking-widest"
-        >
-          <LogOut className="size-3.5" /> Cerrar Sesión
+        <button onClick={() => toast.info("Sesión finalizada")} className="flex items-center gap-2 px-3 py-1.5 text-slate-500 hover:text-red-600 transition-colors text-[10px] font-black uppercase tracking-widest">
+          <LogOut className="size-3.5" /> Salir del Sistema
         </button>
       </SidebarFooter>
     </Sidebar>
