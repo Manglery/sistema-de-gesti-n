@@ -11,29 +11,23 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BarChart3 } from "lucide-react";
-
 export interface MovementDataItem {
   name: string;
   cantidad: number;
   valor: number;
 }
-
 export interface OperatorDataItem {
   name: string;
   valor: number;
 }
-
 interface MovementChartProps {
   data: MovementDataItem[];
 }
-
 interface OperatorsChartProps {
   data: OperatorDataItem[];
 }
-
 const BRAND_RED = "#ef4444";
 const SLATE_DARK = "#334155";
-
 const MovementChart = React.memo(({ data }: MovementChartProps) => {
   return (
     <Card className="h-full border-slate-200">
@@ -71,10 +65,13 @@ const MovementChart = React.memo(({ data }: MovementChartProps) => {
     </Card>
   );
 });
-
 MovementChart.displayName = 'MovementChart';
-
 const OperatorsChart = React.memo(({ data }: OperatorsChartProps) => {
+  const cells = React.useMemo(() => 
+    data.map((_, index) => (
+      <Cell key={`cell-${index}`} fill={BRAND_RED} opacity={1 - (index * 0.05)} />
+    )), [data]
+  );
   return (
     <Card className="h-full border-slate-200">
       <CardHeader className="pb-2 flex flex-row items-center gap-2">
@@ -103,11 +100,7 @@ const OperatorsChart = React.memo(({ data }: OperatorsChartProps) => {
               />
               <Tooltip cursor={{ fill: '#f8fafc' }} />
               <Bar dataKey="valor" fill={BRAND_RED} radius={[0, 4, 4, 0]} barSize={12}>
-                {React.useMemo(() => 
-                  data.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={BRAND_RED} opacity={1 - (index * 0.05)} />
-                  )), [data.length]
-                )}
+                {cells}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -116,8 +109,5 @@ const OperatorsChart = React.memo(({ data }: OperatorsChartProps) => {
     </Card>
   );
 });
-
 OperatorsChart.displayName = 'OperatorsChart';
-
 export { MovementChart, OperatorsChart };
-//

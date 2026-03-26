@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,11 +10,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
-import { WAREHOUSE_DATA } from "@/lib/mock-data";
+import { DashboardData } from "@/lib/mock-data";
 const fadeInUp = {
   initial: { opacity: 0, y: 15 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4, ease: "easeOut" }
+  transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
 };
 export function WelcomeCard() {
   const userName = useAuthStore(s => s.userName);
@@ -102,10 +101,8 @@ export function StatCard({
     </motion.div>
   );
 }
-export function RestockAlertCard() {
-  const currentWarehouseId = useAuthStore(s => s.currentWarehouseId);
-  const activeData = WAREHOUSE_DATA[currentWarehouseId] || WAREHOUSE_DATA.contadores;
-  const alerts = activeData.alerts || [];
+export function RestockAlertCard({ data }: { data: DashboardData }) {
+  const alerts = data.alerts || [];
   return (
     <motion.div {...fadeInUp} className="h-full">
       <Card className="h-full border-slate-200 shadow-sm overflow-hidden flex flex-col bg-white">

@@ -1,4 +1,3 @@
-import React from 'react';
 import { toast } from "sonner";
 import { AppLayout } from '@/components/layout/AppLayout';
 import { 
@@ -17,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Users, 
   Clock, 
@@ -29,16 +29,39 @@ import {
   Building2
 } from "lucide-react";
 import { useAuthStore } from '@/store/use-auth-store';
-import { WAREHOUSE_DATA } from '@/lib/mock-data';
+import { useWarehouseData } from '@/hooks/use-warehouse-data';
 export function HomePage() {
   const role = useAuthStore(s => s.role);
   const currentWarehouseId = useAuthStore(s => s.currentWarehouseId);
   const warehouses = useAuthStore(s => s.warehouses);
   const setWarehouseId = useAuthStore(s => s.setWarehouseId);
-  const activeData = WAREHOUSE_DATA[currentWarehouseId] || WAREHOUSE_DATA.contadores;
+  const { data: activeData, isLoading } = useWarehouseData();
   const handleUpdate = () => {
     toast.success("Datos actualizados correctamente");
   };
+  if (isLoading || !activeData) {
+    return (
+      <AppLayout className="bg-slate-50/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-12 w-48" />
+            <Skeleton className="h-12 w-64" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <Skeleton className="h-[400px] col-span-1" />
+            <div className="col-span-3 space-y-6">
+              <div className="grid grid-cols-3 gap-6">
+                <Skeleton className="h-32" />
+                <Skeleton className="h-32" />
+                <Skeleton className="h-32" />
+              </div>
+              <Skeleton className="h-[400px]" />
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
   return (
     <AppLayout className="bg-slate-50/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -110,25 +133,25 @@ export function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-1 space-y-6">
               <WelcomeCard />
-              <RestockAlertCard />
+              <RestockAlertCard data={activeData} />
             </div>
             <div className="lg:col-span-3 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard 
                   title="USUARIOS ACTIVOS" 
-                  value={activeData.stats.usuarios} 
+                  value={activeData.stats?.usuarios ?? 0} 
                   icon={Users} 
                   iconColor="text-blue-600 bg-blue-50"
                 />
                 <StatCard 
                   title="PEDIDOS PENDIENTES" 
-                  value={activeData.stats.pendientes} 
+                  value={activeData.stats?.pendientes ?? 0} 
                   icon={Clock} 
                   iconColor="text-orange-600 bg-orange-50"
                 />
                 <StatCard 
                   title="TOTAL DESPACHOS" 
-                  value={activeData.stats.despachos} 
+                  value={activeData.stats?.despachos ?? 0} 
                   icon={Truck} 
                   trend="+12%" 
                   trendType="positive"
@@ -138,27 +161,27 @@ export function HomePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard 
                   title="VALOR INVENTARIO" 
-                  value={activeData.stats.inventario} 
+                  value={activeData.stats?.inventario ?? 0} 
                   icon={Package} 
                   iconColor="text-emerald-600 bg-emerald-50"
                 />
                 <StatCard 
                   title="EFECTIVIDAD" 
-                  value={activeData.stats.efectividad} 
+                  value={activeData.stats?.efectividad ?? 0} 
                   icon={TrendingUp} 
                   trend="Meta 95%"
                   iconColor="text-orange-600 bg-orange-50"
                 />
                 <StatCard 
                   title="SALIDA MENSUAL" 
-                  value={activeData.stats.valorSalida} 
+                  value={activeData.stats?.valorSalida ?? 0} 
                   icon={Wallet} 
                   iconColor="text-purple-600 bg-purple-50"
                 />
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <MovementChart data={activeData.movement} />
-                <OperatorsChart data={activeData.operators} />
+                <MovementChart data={activeData.movement ?? []} />
+                <OperatorsChart data={activeData.operators ?? []} />
               </div>
             </div>
           </div>

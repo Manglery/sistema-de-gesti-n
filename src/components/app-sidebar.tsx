@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   PlusCircle, 
@@ -32,19 +32,20 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
 import { useTheme } from "@/hooks/use-theme";
 const allMenuItems = [
-  { title: "Dashboard", icon: LayoutDashboard, roles: ['admin', 'almacenero', 'operario'], active: true },
-  { title: "Nuevo Pedido", icon: PlusCircle, roles: ['admin', 'almacenero', 'operario'], active: false },
-  { title: "Despachar Pedido", icon: Truck, roles: ['admin', 'almacenero'], active: false },
-  { title: "Devoluciones", icon: Undo2, roles: ['admin', 'almacenero'], active: false },
-  { title: "Compras", icon: ShoppingCart, roles: ['admin'], active: false },
-  { title: "Stock & Kardex", icon: Package, roles: ['admin', 'almacenero'], active: false },
-  { title: "Movimientos", icon: Repeat, roles: ['admin'], active: false },
-  { title: "Reportes", icon: BarChart3, roles: ['admin', 'almacenero'], active: false },
-  { title: "Reportes Data", icon: DatabaseZap, roles: ['admin', 'almacenero'], active: false },
-  { title: "Tablas Maestras", icon: Database, roles: ['admin'], active: false },
-  { title: "Usuarios", icon: UsersIcon, roles: ['admin'], active: false },
+  { title: "Dashboard", icon: LayoutDashboard, roles: ['admin', 'almacenero', 'operario'], url: '/' },
+  { title: "Nuevo Pedido", icon: PlusCircle, roles: ['admin', 'almacenero', 'operario'], url: '/new' },
+  { title: "Despachar Pedido", icon: Truck, roles: ['admin', 'almacenero'], url: '/dispatch' },
+  { title: "Devoluciones", icon: Undo2, roles: ['admin', 'almacenero'], url: '/returns' },
+  { title: "Compras", icon: ShoppingCart, roles: ['admin'], url: '/purchases' },
+  { title: "Stock & Kardex", icon: Package, roles: ['admin', 'almacenero'], url: '/inventory' },
+  { title: "Movimientos", icon: Repeat, roles: ['admin'], url: '/movements' },
+  { title: "Reportes", icon: BarChart3, roles: ['admin', 'almacenero'], url: '/reports' },
+  { title: "Reportes Data", icon: DatabaseZap, roles: ['admin', 'almacenero'], url: '/data-reports' },
+  { title: "Tablas Maestras", icon: Database, roles: ['admin'], url: '/tables' },
+  { title: "Usuarios", icon: UsersIcon, roles: ['admin'], url: '/users' },
 ];
 export function AppSidebar(): JSX.Element {
+  const location = useLocation();
   const role = useAuthStore(s => s.role);
   const userName = useAuthStore(s => s.userName);
   const setRole = useAuthStore(s => s.setRole);
@@ -69,25 +70,28 @@ export function AppSidebar(): JSX.Element {
       <SidebarContent className="py-4">
         <SidebarGroup>
           <SidebarMenu className="gap-1 px-2">
-            {filteredItems.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton 
-                  asChild 
-                  isActive={item.active}
-                  className={cn(
-                    "h-9 px-3 transition-colors font-bold text-xs uppercase tracking-tight",
-                    item.active 
-                      ? "bg-red-50 text-red-600 hover:bg-red-100" 
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                  )}
-                >
-                  <a href="#" className="flex items-center gap-3">
-                    <item.icon className={cn("size-4", item.active ? "text-red-600" : "text-slate-400")} />
-                    <span>{item.title}</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
+            {filteredItems.map((item) => {
+              const isActive = location.pathname === item.url;
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={isActive}
+                    className={cn(
+                      "h-9 px-3 transition-colors font-bold text-xs uppercase tracking-tight",
+                      isActive 
+                        ? "bg-red-50 text-red-600 hover:bg-red-100" 
+                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                    )}
+                  >
+                    <Link to={item.url} className="flex items-center gap-3">
+                      <item.icon className={cn("size-4", isActive ? "text-red-600" : "text-slate-400")} />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
           </SidebarMenu>
         </SidebarGroup>
         <div className="mt-auto px-4 mb-4">
@@ -121,10 +125,10 @@ export function AppSidebar(): JSX.Element {
           <SidebarMenu className="px-2 gap-1">
             <SidebarMenuItem>
               <SidebarMenuButton asChild className="h-9 px-3 text-slate-600 hover:bg-slate-50 text-xs font-bold">
-                <a href="#" className="flex items-center gap-3">
+                <Link to="/support" className="flex items-center gap-3">
                   <LifeBuoy className="size-4 text-slate-400" />
                   <span>Soporte</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
