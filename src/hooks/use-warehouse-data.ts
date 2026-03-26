@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/use-auth-store';
-import { WAREHOUSE_DATA, DashboardData } from '@/lib/mock-data';
-export function useWarehouseData() {
+import { DashboardData } from '@/lib/mock-data';
+export function useWarehouseData(month?: string, year?: string) {
   const currentWarehouseId = useAuthStore(s => s.currentWarehouseId);
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -9,18 +9,24 @@ export function useWarehouseData() {
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
-    // Simulate async API fetch
     const fetchMetrics = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 600));
+        const query = new URLSearchParams();
+        if (month) query.append('month', month);
+        if (year) query.append('year', year);
+        const response = await fetch(`/api/dashboard/${currentWarehouseId}?${query.toString()}`);
+        const result = await response.json();
         if (isMounted) {
-          const warehouseData = WAREHOUSE_DATA[currentWarehouseId] || WAREHOUSE_DATA.contadores;
-          setData(warehouseData);
+          if (result.success) {
+            setData(result.data);
+          } else {
+            setError(result.error || 'Error al cargar datos');
+          }
           setIsLoading(false);
         }
       } catch (_err) {
         if (isMounted) {
-          setError('Error al cargar datos del almacén');
+          setError('Error de conexión con el servidor');
           setIsLoading(false);
         }
       }
@@ -29,6 +35,6 @@ export function useWarehouseData() {
     return () => {
       isMounted = false;
     };
-  }, [currentWarehouseId]);
+  }, [currentWarehouseId, month, year]);
   return { data, isLoading, error };
 }
