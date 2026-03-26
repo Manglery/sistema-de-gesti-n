@@ -16,6 +16,12 @@ import { InventoryPage } from '@/pages/InventoryPage'
 import { WarehousesPage } from '@/pages/WarehousesPage'
 import { NewOrderPage } from '@/pages/NewOrderPage'
 import { DispatchPage } from '@/pages/DispatchPage'
+import { ReportsPage } from '@/pages/ReportsPage'
+import { MovementsPage } from '@/pages/MovementsPage'
+import { ReturnsPage } from '@/pages/ReturnsPage'
+import { PurchasesPage } from '@/pages/PurchasesPage'
+import { UsersPage } from '@/pages/UsersPage'
+import { SupportPage } from '@/pages/SupportPage'
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -41,6 +47,36 @@ const router = createBrowserRouter([
   {
     path: "/dispatch",
     element: <DispatchPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/reports",
+    element: <ReportsPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/movements",
+    element: <MovementsPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/returns",
+    element: <ReturnsPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/purchases",
+    element: <PurchasesPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/users",
+    element: <UsersPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/support",
+    element: <SupportPage />,
     errorElement: <RouteErrorBoundary />,
   },
 ]);
