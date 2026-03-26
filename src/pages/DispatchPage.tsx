@@ -6,6 +6,7 @@ import {
   Truck, 
   Clock, 
   ChevronRight, 
+  Package, 
   CheckCircle2,
   Calendar,
   User,
@@ -13,40 +14,18 @@ import {
 } from 'lucide-react';
 import { useOrderStore } from '@/store/use-order-store';
 import { useAuthStore } from '@/store/use-auth-store';
-import { useInventoryStore } from '@/store/use-inventory-store';
-import { useActivityStore } from '@/store/use-activity-store';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useMemo } from 'react';
 import { toast } from 'sonner';
 export function DispatchPage() {
   const currentWarehouseId = useAuthStore(s => s.currentWarehouseId);
-  const userName = useAuthStore(s => s.userName);
   const orders = useOrderStore(s => s.orders);
   const updateOrderStatus = useOrderStore(s => s.updateOrderStatus);
-  const adjustStock = useInventoryStore(s => s.adjustStock);
-  const addLog = useActivityStore(s => s.addLog);
-  const pendingOrders = useMemo(() => 
-    orders.filter(o => 
-      o.warehouseId === currentWarehouseId && o.status === 'PENDING'
-    ),
-    [orders, currentWarehouseId]
+  const pendingOrders = orders.filter(o => 
+    o.warehouseId === currentWarehouseId && o.status === 'PENDING'
   );
-  const handleDispatch = (id: string, orderNumber: string, items: any[], customer: string) => {
-    // 1. Update order status
+  const handleDispatch = (id: string, orderNumber: string) => {
     updateOrderStatus(id, 'DISPATCHED');
-    // 2. Adjust inventory stock for each item
-    items.forEach(item => {
-      adjustStock(currentWarehouseId, item.id, -item.quantity);
-    });
-    // 3. Log activity
-    addLog({
-      type: 'ORDER_DISPATCHED',
-      message: `Pedido ${orderNumber} despachado a ${customer}`,
-      user: userName,
-      warehouseId: currentWarehouseId,
-      metadata: { orderId: id, itemsCount: items.length }
-    });
     toast.success(`Pedido ${orderNumber} despachado con éxito`);
   };
   return (
@@ -76,10 +55,10 @@ export function DispatchPage() {
                 <Card key={order.id} className="border-slate-200 hover:shadow-lg transition-shadow overflow-hidden group">
                   <CardHeader className="bg-slate-50 border-b p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <Badge className="bg-white text-red-600 border-red-100 font-black text-[9px] uppercase px-2 py-0.5">
+                      <Badge className="bg-white text-red-600 border-red-100 hover:bg-white font-black text-[9px] uppercase px-2 py-0.5 shadow-sm">
                         {order.orderNumber}
                       </Badge>
-                      <span className="text-[9px] font-black text-slate-400 uppercase">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
                         {format(new Date(order.createdAt), "HH:mm", { locale: es })}
                       </span>
                     </div>
@@ -105,18 +84,23 @@ export function DispatchPage() {
                           {order.items.slice(0, 3).map(item => (
                             <div key={item.id} className="flex justify-between items-center text-[11px]">
                               <span className="font-bold text-slate-700 truncate max-w-[180px] uppercase">{item.description}</span>
-                              <span className="font-black text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded">
+                              <span className="font-black text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded whitespace-nowrap">
                                 x{item.quantity} {item.unit}
                               </span>
                             </div>
                           ))}
+                          {order.items.length > 3 && (
+                            <div className="text-[9px] font-bold text-slate-400 uppercase text-center pt-1 italic">
+                              + {order.items.length - 3} artículos más
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                     <div className="p-4 bg-slate-50 border-t border-slate-100 mt-2">
                       <Button 
-                        onClick={() => handleDispatch(order.id, order.orderNumber, order.items, order.customerName)}
-                        className="w-full bg-slate-900 hover:bg-red-600 text-white font-black text-[10px] uppercase tracking-widest h-10 transition-colors flex items-center justify-between px-4"
+                        onClick={() => handleDispatch(order.id, order.orderNumber)}
+                        className="w-full bg-slate-900 hover:bg-red-600 text-white font-black text-[10px] uppercase tracking-widest h-10 transition-colors group-hover:shadow-lg flex items-center justify-between px-4"
                       >
                         Despachar Ahora
                         <ChevronRight className="size-4" />
@@ -133,7 +117,7 @@ export function DispatchPage() {
               </div>
               <div className="text-center">
                 <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">¡Todo al día!</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">No hay pedidos pendientes de despacho</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">No hay pedidos pendientes de despacho en este almacén</p>
               </div>
             </div>
           )}

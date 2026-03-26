@@ -14,6 +14,8 @@ import '@/index.css'
 import { HomePage } from '@/pages/HomePage'
 import { InventoryPage } from '@/pages/InventoryPage'
 import { WarehousesPage } from '@/pages/WarehousesPage'
+import { NewOrderPage } from '@/pages/NewOrderPage'
+import { DispatchPage } from '@/pages/DispatchPage'
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -29,6 +31,16 @@ const router = createBrowserRouter([
   {
     path: "/warehouses",
     element: <WarehousesPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/new",
+    element: <NewOrderPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/dispatch",
+    element: <DispatchPage />,
     errorElement: <RouteErrorBoundary />,
   },
 ]);

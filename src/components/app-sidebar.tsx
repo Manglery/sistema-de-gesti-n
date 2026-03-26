@@ -8,7 +8,6 @@ import {
   BarChart3, 
   Undo2,
   ShoppingCart,
-  Database,
   Users as UsersIcon,
   LifeBuoy,
   Moon,
@@ -53,7 +52,7 @@ export function AppSidebar(): JSX.Element {
   const currentWarehouseId = useAuthStore(s => s.currentWarehouseId);
   const warehouses = useAuthStore(s => s.warehouses);
   const { toggleTheme } = useTheme();
-  const activeWarehouse = warehouses.find(w => w.id === currentWarehouseId);
+  const activeWarehouse = warehouses?.find(w => w.id === currentWarehouseId);
   const filteredItems = allMenuItems.filter(item => item.roles.includes(role));
   return (
     <Sidebar className="border-r border-border bg-white dark:bg-zinc-950">
