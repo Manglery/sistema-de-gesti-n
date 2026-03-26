@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, X, IdCard, Phone } from 'lucide-react';
+import { UserPlus, X } from 'lucide-react';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useUserStore, UserRole } from '@/store/use-user-store';
 import { toast } from 'sonner';
@@ -39,11 +39,10 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
     email: '',
     role: '' as UserRole | '',
     status: true,
-    warehouseIds: [] as string[],
-    employeeId: '',
-    phone: ''
+    warehouseIds: [] as string[]
   });
-  useEffect(() => {
+
+  React.useEffect(() => {
     if (!open) {
       setFormData({
         username: '',
@@ -52,9 +51,7 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
         email: '',
         role: '',
         status: true,
-        warehouseIds: [],
-        employeeId: '',
-        phone: ''
+        warehouseIds: []
       });
     }
   }, [open]);
@@ -68,8 +65,9 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
   };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.username || !formData.password || !formData.fullName || !formData.role || !formData.employeeId || formData.warehouseIds.length === 0) {
-      toast.error("Por favor complete todos los campos obligatorios (Usuario, Contraseña, Nombre, Perfil, ID Empleado y Almacén).");
+    // Basic validation
+    if (!formData.username || !formData.password || !formData.fullName || !formData.role || formData.warehouseIds.length === 0) {
+      toast.error("Por favor complete todos los campos obligatorios y seleccione al menos un almacén.");
       return;
     }
     addUser({
@@ -80,22 +78,20 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
       role: formData.role as UserRole,
       status: formData.status ? 'ACTIVO' : 'INACTIVO',
       lastAccess: '-',
-      warehouseIds: formData.warehouseIds,
-      employeeId: formData.employeeId,
-      phone: formData.phone
+      warehouseIds: formData.warehouseIds
     });
     toast.success("Usuario creado con éxito");
     onOpenChange(false);
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden border-none shadow-2xl">
-        <DialogHeader className="p-6 border-b flex flex-row items-center justify-between bg-white">
+      <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden border-none shadow-2xl">
+        <DialogHeader className="p-6 border-b flex flex-row items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="size-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600">
               <UserPlus className="size-5" />
             </div>
-            <DialogTitle className="text-lg font-black uppercase text-slate-900 tracking-tight">Nuevo Registro de Usuario</DialogTitle>
+            <DialogTitle className="text-lg font-black uppercase text-slate-900 tracking-tight">Nuevo Usuario</DialogTitle>
           </div>
           <DialogClose asChild>
             <Button variant="ghost" size="icon" className="size-8 text-slate-400 hover:text-slate-900">
@@ -103,92 +99,60 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
             </Button>
           </DialogClose>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 bg-white">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
-                ID de Empleado <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative">
-                <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                <Input 
-                  placeholder="ACC-0000" 
-                  className="h-10 border-slate-200 pl-10"
-                  value={formData.employeeId}
-                  onChange={(e) => setFormData(prev => ({...prev, employeeId: e.target.value}))}
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
-                Teléfono Corporativo
-              </Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                <Input 
-                  placeholder="+34 000 000 000" 
-                  className="h-10 border-slate-200 pl-10"
-                  value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({...prev, phone: e.target.value}))}
-                />
-              </div>
-            </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
+              Usuario <span className="text-red-500">*</span>
+            </Label>
+            <Input 
+              placeholder="nombre.usuario" 
+              className="h-10 border-slate-200"
+              value={formData.username}
+              onChange={(e) => setFormData({...formData, username: e.target.value})}
+            />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
-                Usuario <span className="text-red-500">*</span>
-              </Label>
-              <Input 
-                placeholder="nombre.apellido" 
-                className="h-10 border-slate-200"
-                value={formData.username}
-                onChange={(e) => setFormData(prev => ({...prev, username: e.target.value}))}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
-                Contraseña <span className="text-red-500">*</span>
-              </Label>
-              <Input 
-                type="password"
-                placeholder="********" 
-                className="h-10 border-slate-200"
-                value={formData.password}
-                onChange={(e) => setFormData(prev => ({...prev, password: e.target.value}))}
-              />
-            </div>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
+              Contraseña <span className="text-red-500">*</span>
+            </Label>
+            <Input 
+              type="password"
+              placeholder="********" 
+              className="h-10 border-slate-200"
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
+            />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
               Nombre Completo <span className="text-red-500">*</span>
             </Label>
             <Input 
-              placeholder="Juan Pérez García" 
+              placeholder="Nombre Apellido Apellido" 
               className="h-10 border-slate-200"
               value={formData.fullName}
-              onChange={(e) => setFormData(prev => ({...prev, fullName: e.target.value}))}
+              onChange={(e) => setFormData({...formData, fullName: e.target.value})}
             />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
-              Email Corporativo
+              Email
             </Label>
             <Input 
               type="email"
               placeholder="usuario@acciona.com" 
               className="h-10 border-slate-200"
               value={formData.email}
-              onChange={(e) => setFormData(prev => ({...prev, email: e.target.value}))}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
             />
           </div>
           <div className="space-y-2.5">
             <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
-              Asignación de Almacenes <span className="text-red-500">*</span>
+              Acceso a Almacenes <span className="text-red-500">*</span>
             </Label>
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              {(warehouses || []).map((warehouse) => (
-                <div key={warehouse.id} className="flex items-center space-x-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
+            <div className="flex flex-wrap gap-4 pt-1">
+              {warehouses.map((warehouse) => (
+                <div key={warehouse.id} className="flex items-center space-x-2">
                   <Checkbox 
                     id={`wh-${warehouse.id}`} 
                     checked={formData.warehouseIds.includes(warehouse.id)}
@@ -196,7 +160,7 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
                   />
                   <label 
                     htmlFor={`wh-${warehouse.id}`}
-                    className="text-[10px] font-bold text-slate-700 uppercase cursor-pointer truncate"
+                    className="text-xs font-bold text-slate-700 uppercase cursor-pointer"
                   >
                     {warehouse.name.replace('Almacén de ', '')}
                   </label>
@@ -211,7 +175,7 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
               </Label>
               <Select 
                 value={formData.role} 
-                onValueChange={(val) => setFormData(prev => ({...prev, role: val as UserRole}))}
+                onValueChange={(val) => setFormData({...formData, role: val as UserRole})}
               >
                 <SelectTrigger className="h-10 border-slate-200 font-bold text-xs uppercase">
                   <SelectValue placeholder="Seleccionar..." />
@@ -225,12 +189,12 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
             </div>
             <div className="space-y-1.5">
               <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
-                Estado de Cuenta
+                Estado
               </Label>
-              <div className="flex items-center gap-2 h-10 px-3 bg-slate-50 rounded-lg border border-slate-100">
+              <div className="flex items-center gap-2 h-10">
                 <Switch 
                   checked={formData.status} 
-                  onCheckedChange={(val) => setFormData(prev => ({...prev, status: val}))}
+                  onCheckedChange={(val) => setFormData({...formData, status: val})}
                 />
                 <span className={cn(
                   "text-[10px] font-black uppercase tracking-widest",
@@ -245,16 +209,27 @@ export function UserDialog({ open, onOpenChange }: UserDialogProps) {
         <DialogFooter className="p-6 bg-slate-50/50 border-t flex flex-row gap-3">
           <Button 
             variant="outline" 
-            onClick={() => onOpenChange(false)}
+            onClick={() => {
+              setFormData({
+                username: '',
+                password: '',
+                fullName: '',
+                email: '',
+                role: '',
+                status: true,
+                warehouseIds: []
+              });
+              onOpenChange(false);
+            }}
             className="flex-1 h-11 text-xs font-black uppercase tracking-widest border-slate-200"
           >
             Cancelar
           </Button>
           <Button 
-            onClick={handleSubmit}
+            type="submit"
             className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-red-100"
           >
-            Guardar Usuario
+            Crear Usuario
           </Button>
         </DialogFooter>
       </DialogContent>
