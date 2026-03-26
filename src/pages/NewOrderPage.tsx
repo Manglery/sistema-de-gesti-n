@@ -20,6 +20,7 @@ import {
 import { useInventoryData } from '@/hooks/use-inventory-data';
 import { useOrderStore } from '@/store/use-order-store';
 import { useAuthStore } from '@/store/use-auth-store';
+import { useActivityStore } from '@/store/use-activity-store';
 import { Order, OrderItem } from '@/lib/orders-data';
 import { InventoryItem } from '@/lib/inventory-data';
 import { v4 as uuidv4 } from 'uuid';
@@ -30,6 +31,7 @@ export function NewOrderPage() {
   const currentWarehouseId = useAuthStore(s => s.currentWarehouseId);
   const userName = useAuthStore(s => s.userName);
   const addOrder = useOrderStore(s => s.addOrder);
+  const addLog = useActivityStore(s => s.addLog);
   const [searchTerm, setSearchTerm] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]);
@@ -86,9 +88,10 @@ export function NewOrderPage() {
       toast.error("Agregue al menos un producto al pedido");
       return;
     }
+    const orderNumber = `PED-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
     const newOrder: Order = {
       id: uuidv4(),
-      orderNumber: `PED-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+      orderNumber,
       warehouseId: currentWarehouseId,
       customerName: customerName.trim(),
       items: selectedItems,
@@ -98,6 +101,13 @@ export function NewOrderPage() {
       createdBy: userName
     };
     addOrder(newOrder);
+    addLog({
+      type: 'ORDER_CREATED',
+      message: `Nuevo pedido creado: ${orderNumber} para ${customerName.trim()}`,
+      user: userName,
+      warehouseId: currentWarehouseId,
+      metadata: { orderId: newOrder.id, itemsCount: selectedItems.length }
+    });
     toast.success("Pedido creado correctamente");
     navigate('/');
   };
@@ -115,7 +125,6 @@ export function NewOrderPage() {
             </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Selector de Inventario */}
             <Card className="lg:col-span-7 border-slate-200 shadow-sm overflow-hidden h-full flex flex-col">
               <CardHeader className="bg-slate-50/50 border-b p-5">
                 <div className="flex flex-col gap-4">
@@ -136,16 +145,10 @@ export function NewOrderPage() {
                   {isLoading ? (
                     <div className="p-5 space-y-4">
                       {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="flex gap-4">
-                          <Skeleton className="size-10 rounded-lg" />
-                          <div className="space-y-2 flex-1">
-                            <Skeleton className="h-4 w-24" />
-                            <Skeleton className="h-4 w-full" />
-                          </div>
-                        </div>
+                        <Skeleton key={i} className="h-16 w-full" />
                       ))}
                     </div>
-                  ) : filteredInventory.length > 0 ? (
+                  ) : (
                     <div className="divide-y divide-slate-100">
                       {filteredInventory.map(item => (
                         <div key={item.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors group">
@@ -163,7 +166,7 @@ export function NewOrderPage() {
                             variant="ghost" 
                             size="sm" 
                             onClick={() => addItem(item)}
-                            className="text-red-600 hover:bg-red-50 hover:text-red-700 font-bold text-xs"
+                            className="text-red-600 hover:bg-red-50 font-bold text-xs"
                             disabled={item.stock <= 0}
                           >
                             Agregar <ChevronRight className="ml-1 size-3" />
@@ -171,16 +174,10 @@ export function NewOrderPage() {
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <div className="p-20 text-center flex flex-col items-center gap-4 text-slate-300">
-                      <XCircle className="size-12 opacity-20" />
-                      <p className="text-xs font-black uppercase tracking-widest">No se encontraron artículos</p>
-                    </div>
                   )}
                 </ScrollArea>
               </CardContent>
             </Card>
-            {/* Resumen del Pedido */}
             <Card className="lg:col-span-5 border-slate-200 shadow-lg sticky top-8">
               <CardHeader className="bg-slate-900 text-white p-5 rounded-t-lg">
                 <div className="flex items-center gap-3">
@@ -204,54 +201,31 @@ export function NewOrderPage() {
                   />
                 </div>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b pb-2">
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Artículos ({selectedItems.length})</span>
-                    {selectedItems.length > 0 && (
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedItems([])} className="h-6 text-[9px] font-black text-red-600 uppercase">Vaciar</Button>
-                    )}
-                  </div>
-                  {selectedItems.length > 0 ? (
-                    <div className="space-y-3 max-h-[300px] overflow-auto pr-2">
-                      {selectedItems.map(item => (
-                        <div key={item.id} className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100">
-                          <div className="flex-1 min-w-0 pr-4">
-                            <div className="text-[9px] font-black text-slate-400 uppercase truncate">{item.code}</div>
-                            <div className="text-xs font-bold text-slate-900 uppercase truncate leading-tight">{item.description}</div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center bg-white border border-slate-200 rounded-md">
-                              <button 
-                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                className="px-2 py-1 text-slate-400 hover:text-slate-900"
-                              >-</button>
-                              <span className="w-8 text-center text-xs font-black">{item.quantity}</span>
-                              <button 
-                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                className="px-2 py-1 text-slate-400 hover:text-slate-900"
-                              >+</button>
-                            </div>
-                            <button onClick={() => removeItem(item.id)} className="text-slate-300 hover:text-red-600 transition-colors">
-                              <Trash2 className="size-4" />
-                            </button>
-                          </div>
+                  {selectedItems.map(item => (
+                    <div key={item.id} className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      <div className="flex-1 min-w-0 pr-4">
+                        <div className="text-[9px] font-black text-slate-400 uppercase truncate">{item.code}</div>
+                        <div className="text-xs font-bold text-slate-900 uppercase truncate leading-tight">{item.description}</div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center bg-white border border-slate-200 rounded-md">
+                          <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="px-2 text-slate-400">-</button>
+                          <span className="w-8 text-center text-xs font-black">{item.quantity}</span>
+                          <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="px-2 text-slate-400">+</button>
                         </div>
-                      ))}
+                        <button onClick={() => removeItem(item.id)} className="text-slate-300 hover:text-red-600">
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="h-32 flex flex-col items-center justify-center text-slate-300 gap-2 border-2 border-dashed border-slate-100 rounded-lg">
-                      <ShoppingCart className="size-8 opacity-20" />
-                      <p className="text-[9px] font-bold uppercase tracking-widest">Carrito vacío</p>
-                    </div>
-                  )}
+                  ))}
                 </div>
-                <div className="pt-4 border-t border-slate-100">
-                  <Button 
-                    onClick={handleSubmit}
-                    className="w-full bg-red-600 hover:bg-red-700 h-12 text-xs font-black uppercase tracking-widest shadow-xl shadow-red-100 flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle2 className="size-4" /> Finalizar Pedido
-                  </Button>
-                </div>
+                <Button 
+                  onClick={handleSubmit}
+                  className="w-full bg-red-600 hover:bg-red-700 h-12 text-xs font-black uppercase tracking-widest shadow-xl shadow-red-100"
+                >
+                  <CheckCircle2 className="size-4 mr-2" /> Finalizar Pedido
+                </Button>
               </CardContent>
             </Card>
           </div>

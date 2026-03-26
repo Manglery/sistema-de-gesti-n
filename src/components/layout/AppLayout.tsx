@@ -1,9 +1,11 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { CommandMenu } from "@/components/command-menu";
 import { useAuthStore } from "@/store/use-auth-store";
 import { cn } from "@/lib/utils";
 import { useLocation } from 'react-router-dom';
+import { Search } from 'lucide-react';
 type AppLayoutProps = {
   children: ReactNode;
   container?: boolean;
@@ -24,17 +26,16 @@ export function AppLayout({ children, container = false, className, contentClass
   );
   const location = useLocation();
   const [isSyncing, setIsSyncing] = useState(false);
-  // Show a visual "sync" pulse when warehouse or location changes (simulating API fetch context)
   useEffect(() => {
     setIsSyncing(true);
     const timer = setTimeout(() => setIsSyncing(false), 800);
     return () => clearTimeout(timer);
-  }, [currentWarehouseId, location.pathname, setIsSyncing]);
+  }, [currentWarehouseId, location.pathname]);
   return (
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
+      <CommandMenu />
       <SidebarInset className={cn("relative", className)}>
-        {/* Warehouse Indicator Bar with Pulse feedback during data fetching */}
         <div className={cn(
           "h-1.5 w-full fixed top-0 left-0 right-0 z-[60] transition-all duration-500", 
           accentColor,
@@ -43,8 +44,14 @@ export function AppLayout({ children, container = false, className, contentClass
         <div className="absolute left-4 top-4 z-20 md:hidden">
           <SidebarTrigger />
         </div>
-        {/* Global Context Banner */}
         <div className="hidden md:flex absolute top-1.5 right-8 h-10 items-center gap-4 z-40">
+          <button 
+            className="flex items-center gap-2 px-3 py-1 bg-white/90 backdrop-blur rounded-b-lg border-x border-b border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+            onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
+          >
+            <Search className="size-3 text-slate-400" />
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">BUSCAR (⌘K)</span>
+          </button>
           <div className="flex items-center gap-2 px-3 py-1 bg-white/90 backdrop-blur rounded-b-lg border-x border-b border-slate-200 shadow-sm">
             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">PERFIL:</span>
             <span className="text-[10px] font-black text-red-600 uppercase tracking-tight">{role}</span>

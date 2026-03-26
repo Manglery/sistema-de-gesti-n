@@ -5,20 +5,56 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Search, Filter, FileDown, Plus, Package, AlertTriangle, CheckCircle2, XCircle, MapPin, History, LayoutGrid } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Search, Filter, FileDown, Plus, Package, AlertTriangle, CheckCircle2, XCircle, MapPin, History, LayoutGrid, Settings2 } from 'lucide-react';
 import { InventoryItem } from '@/lib/inventory-data';
 import { useInventoryData } from '@/hooks/use-inventory-data';
+import { useInventoryStore } from '@/store/use-inventory-store';
+import { useActivityStore } from '@/store/use-activity-store';
+import { useAuthStore } from '@/store/use-auth-store';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 export function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [isAdjusting, setIsAdjusting] = useState(false);
+  const [adjustQty, setAdjustQty] = useState('0');
+  const [adjustReason, setAdjustReason] = useState('Inventario Cíclico');
   const { items, isLoading } = useInventoryData();
-  const filteredItems = items.filter(item => 
+  const adjustStockAction = useInventoryStore(s => s.adjustStock);
+  const addLog = useActivityStore(s => s.addLog);
+  const warehouseId = useAuthStore(s => s.currentWarehouseId);
+  const userName = useAuthStore(s => s.userName);
+  const filteredItems = (items || []).filter(item => 
     item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const handleAdjustStock = () => {
+    if (!selectedItem) return;
+    const amount = parseInt(adjustQty);
+    if (isNaN(amount) || amount === 0) {
+      toast.error("Por favor ingrese una cantidad válida");
+      return;
+    }
+    adjustStockAction(warehouseId, selectedItem.id, amount);
+    addLog({
+      type: 'STOCK_ADJUSTED',
+      message: `Stock ajustado para ${selectedItem.code}: ${amount > 0 ? '+' : ''}${amount} unidades. Motivo: ${adjustReason}`,
+      user: userName,
+      warehouseId: warehouseId,
+      metadata: { itemId: selectedItem.id, amount, reason: adjustReason }
+    });
+    toast.success("Stock actualizado correctamente");
+    setIsAdjusting(false);
+    setAdjustQty('0');
+    setAdjustReason('Inventario Cíclico');
+    setSheetOpen(false);
+    setSelectedItem(null);
+  };
   const getStatusBadge = (status: InventoryItem['status']) => {
     switch (status) {
       case 'In Stock':
@@ -58,7 +94,7 @@ export function InventoryPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
                 <Input 
                   placeholder="Buscar por código, descripción o categoría..." 
-                  className="pl-10 h-10 text-sm border-slate-200 focus:ring-red-500 bg-white"
+                  className="pl-10 h-10 text-sm border-slate-200 bg-white"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -71,65 +107,59 @@ export function InventoryPage() {
               <Table>
                 <TableHeader className="bg-slate-50">
                   <TableRow className="border-slate-100">
-                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest py-4">Código</TableHead>
-                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest py-4">Descripción</TableHead>
-                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest py-4">Categoría</TableHead>
-                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest py-4">Stock Actual</TableHead>
-                    <TableHead className="text-[10px] font-black text-slate-400 uppercase tracking-widest py-4 text-right">Acciones</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase py-4">Código</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase py-4">Descripción</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase py-4">Categoría</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase py-4">Stock</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase py-4 text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     Array.from({ length: 5 }).map((_, idx) => (
                       <TableRow key={idx}>
-                        {Array.from({ length: 5 }).map((_, j) => (
-                          <TableCell key={j}><Skeleton className="h-6 w-full" /></TableCell>
-                        ))}
+                        <TableCell colSpan={5}><Skeleton className="h-6 w-full" /></TableCell>
                       </TableRow>
                     ))
-                  ) : filteredItems.length > 0 ? (
-                    filteredItems.map((item) => (
-                      <TableRow 
-                        key={item.id} 
-                        className="hover:bg-slate-50/80 transition-colors border-slate-100 cursor-pointer group"
-                        onClick={() => setSelectedItem(item)}
-                      >
-                        <TableCell className="text-xs font-black text-red-600">{item.code}</TableCell>
-                        <TableCell className="text-xs font-bold text-slate-700 uppercase">{item.description}</TableCell>
-                        <TableCell className="text-[10px] font-bold text-slate-500 uppercase">{item.category}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className={cn("text-xs font-black", item.stock <= item.minStock ? "text-red-600" : "text-slate-900")}>
-                              {item.stock} {item.unit}
-                            </span>
-                            <span className="text-[9px] font-bold text-slate-400 uppercase">Mín: {item.minStock}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase text-slate-400 group-hover:text-red-600">
-                            Ver Ficha
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-64 text-center">
-                        <div className="flex flex-col items-center gap-2">
-                          <Package className="size-12 text-slate-200" />
-                          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No se encontraron resultados</p>
+                  ) : filteredItems.map((item) => (
+                    <TableRow 
+                      key={item.id} 
+                      className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                      onClick={() => {
+                        setSelectedItem(item);
+                        setSheetOpen(true);
+                      }}
+                    >
+                      <TableCell className="text-xs font-black text-red-600">{item.code}</TableCell>
+                      <TableCell className="text-xs font-bold text-slate-700 uppercase">{item.description}</TableCell>
+                      <TableCell className="text-[10px] font-bold text-slate-500 uppercase">{item.category}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className={cn("text-xs font-black", item.stock <= item.minStock ? "text-red-600" : "text-slate-900")}>
+                            {item.stock} {item.unit}
+                          </span>
                         </div>
                       </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase text-slate-400 group-hover:text-red-600">
+                          Ver Detalle
+                        </Button>
+                      </TableCell>
                     </TableRow>
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </div>
           </div>
         </div>
       </div>
-      <Sheet open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
-        <SheetContent className="sm:max-w-md bg-white border-l border-slate-200 p-0 overflow-auto">
+      <Sheet open={sheetOpen} onOpenChange={(open) => {
+        setSheetOpen(open);
+        if (!open) {
+          setSelectedItem(null);
+        }
+      }}>
+        <SheetContent className="sm:max-w-md bg-white border-l p-0 overflow-auto">
           {selectedItem && (
             <div className="flex flex-col h-full">
               <SheetHeader className="p-8 bg-slate-900 text-white relative">
@@ -138,23 +168,22 @@ export function InventoryPage() {
                     <Package className="size-6" />
                   </div>
                   <div className="text-left">
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{selectedItem.code}</div>
-                    <SheetTitle className="text-xl font-black text-white uppercase leading-tight">{selectedItem.description}</SheetTitle>
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{selectedItem.code}</div>
+                    <SheetTitle className="text-xl font-black text-white uppercase">{selectedItem.description}</SheetTitle>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   {getStatusBadge(selectedItem.status)}
-                  <Badge variant="outline" className="border-slate-700 text-slate-300 text-[9px] font-black uppercase">{selectedItem.category}</Badge>
                 </div>
               </SheetHeader>
               <div className="p-8 space-y-8">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Stock Disponible</span>
+                    <span className="text-[9px] font-black text-slate-400 uppercase block mb-2">Stock Disponible</span>
                     <span className="text-2xl font-black text-slate-900">{selectedItem.stock} <span className="text-xs text-slate-400">{selectedItem.unit}</span></span>
                   </div>
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Ubicación Actual</span>
+                    <span className="text-[9px] font-black text-slate-400 uppercase block mb-2">Ubicación</span>
                     <div className="flex items-center gap-2">
                       <MapPin className="size-4 text-red-600" />
                       <span className="text-sm font-black text-slate-900 uppercase">{selectedItem.location}</span>
@@ -162,52 +191,64 @@ export function InventoryPage() {
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                  <div className="flex items-center gap-2 border-b pb-2">
                     <History className="size-4 text-slate-400" />
-                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Movimientos Recientes</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Historial Reciente</span>
                   </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-lg">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-emerald-600 uppercase">Entrada - Recepción PO-12</span>
-                        <span className="text-[9px] text-slate-400 uppercase font-bold">25 Mar 2024</span>
-                      </div>
-                      <span className="text-xs font-black text-slate-900">+50</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-lg">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-red-600 uppercase">Salida - Pedido PED-2024-001</span>
-                        <span className="text-[9px] text-slate-400 uppercase font-bold">24 Mar 2024</span>
-                      </div>
-                      <span className="text-xs font-black text-slate-900">-10</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-                    <LayoutGrid className="size-4 text-slate-400" />
-                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Stock en otros almacenes</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2">
-                    <div className="flex justify-between items-center text-[11px] p-3 border border-dashed border-slate-200 rounded-lg">
-                      <span className="font-bold text-slate-500 uppercase">Almacén Averías</span>
-                      <span className="font-black text-slate-900">12 Uds</span>
-                    </div>
-                    <div className="flex justify-between items-center text-[11px] p-3 border border-dashed border-slate-200 rounded-lg">
-                      <span className="font-bold text-slate-500 uppercase">Almacén Acometidas</span>
-                      <span className="font-black text-slate-900">0 Uds</span>
-                    </div>
-                  </div>
+                  <p className="text-[10px] text-slate-400 italic">No hay registros de movimientos en esta sesión.</p>
                 </div>
               </div>
-              <div className="mt-auto p-8 border-t border-slate-100 bg-slate-50/50 flex gap-3">
-                <Button className="flex-1 bg-slate-900 text-[10px] font-black uppercase h-12 shadow-lg shadow-slate-200">Ajustar Stock</Button>
+              <div className="mt-auto p-8 border-t bg-slate-50/50 flex gap-3">
+                <Button 
+                  onClick={() => setIsAdjusting(true)}
+                  className="flex-1 bg-slate-900 text-[10px] font-black uppercase h-12"
+                >
+                  <Settings2 className="mr-2 size-4" /> Ajustar Stock
+                </Button>
                 <Button variant="outline" className="flex-1 text-[10px] font-black uppercase h-12">Transferir</Button>
               </div>
             </div>
           )}
         </SheetContent>
       </Sheet>
+      <Dialog open={isAdjusting} onOpenChange={setIsAdjusting}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-black uppercase">Ajuste de Inventario</DialogTitle>
+            <DialogDescription className="text-xs uppercase font-bold text-slate-400">
+              Modifique el stock manualmente para {selectedItem?.code ?? 'este item'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase">Cantidad a ajustar (+/-)</Label>
+              <Input 
+                type="number" 
+                value={adjustQty} 
+                onChange={(e) => setAdjustQty(e.target.value)} 
+                placeholder="Ej: -5 o 10"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase">Motivo del Ajuste</Label>
+              <select 
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                value={adjustReason}
+                onChange={(e) => setAdjustReason(e.target.value)}
+              >
+                <option>Inventario Cíclico</option>
+                <option>Merma / Daño</option>
+                <option>Error de Ingreso</option>
+                <option>Ajuste de Auditoría</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAdjusting(false)} className="text-[10px] font-black uppercase">Cancelar</Button>
+            <Button onClick={handleAdjustStock} className="bg-red-600 hover:bg-red-700 text-[10px] font-black uppercase">Confirmar Ajuste</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

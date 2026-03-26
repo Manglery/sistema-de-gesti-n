@@ -1,65 +1,74 @@
 import { create } from 'zustand';
-import { InventoryItem } from '@/lib/inventory-data';
+import { InventoryItem, INVENTORY_BY_WAREHOUSE } from '@/lib/inventory-data';
 interface InventoryState {
   inventory: Record<string, InventoryItem[]>;
-  isLoading: boolean;
-  error: string | null;
-  fetchInventory: (warehouseId: string) => Promise<void>;
-  adjustStock: (warehouseId: string, itemId: string, amount: number, reason: string, user: string) => Promise<void>;
+  adjustStock: (warehouseId: string, itemId: string, amount: number) => void;
+  transferStock: (fromWarehouseId: string, toWarehouseId: string, itemId: string, quantity: number) => void;
   setWarehouseInventory: (warehouseId: string, items: InventoryItem[]) => void;
 }
 export const useInventoryStore = create<InventoryState>((set) => ({
-  inventory: {},
-  isLoading: false,
-  error: null,
-  fetchInventory: async (warehouseId) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await fetch(`/api/inventory/${warehouseId}`);
-      if (!response.ok) throw new Error('Network response was not ok');
-      const result = await response.json();
-      if (result.success) {
-        set((state) => ({
-          inventory: { ...state.inventory, [warehouseId]: result.data },
-          isLoading: false
-        }));
-      } else {
-        set({ error: result.error, isLoading: false });
+  inventory: INVENTORY_BY_WAREHOUSE,
+  adjustStock: (warehouseId, itemId, amount) => set((state) => {
+    const warehouseItems = state.inventory[warehouseId] || [];
+    const updatedItems = warehouseItems.map((item) => {
+      if (item.id === itemId) {
+        const newStock = Math.max(0, item.stock + amount);
+        let status: InventoryItem['status'] = 'In Stock';
+        if (newStock === 0) status = 'Out of Stock';
+        else if (newStock <= item.minStock) status = 'Low Stock';
+        return { ...item, stock: newStock, status };
       }
-    } catch (err) {
-      console.error('fetchInventory Error:', err);
-      set({ error: 'Error de conexión con el servidor', isLoading: false });
+      return item;
+    });
+    return {
+      inventory: {
+        ...state.inventory,
+        [warehouseId]: updatedItems,
+      },
+    };
+  }),
+  transferStock: (fromId, toId, itemId, qty) => set((state) => {
+    const fromItemsCopy = [...(state.inventory[fromId] || [])];
+    const toItemsCopy = [...(state.inventory[toId] || [])];
+    
+    const fromItemIndex = fromItemsCopy.findIndex(i => i.id === itemId);
+    if (fromItemIndex === -1) {
+      return state;
     }
-  },
-  adjustStock: async (warehouseId, itemId, amount, reason, user) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await fetch('/api/inventory/adjust', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ warehouseId, itemId, amount, reason, user })
+    
+    const itemToMove = fromItemsCopy[fromItemIndex];
+    if (itemToMove.stock < qty) {
+      return state;
+    }
+    
+    // Update from warehouse
+    fromItemsCopy[fromItemIndex] = { ...itemToMove, stock: itemToMove.stock - qty };
+    
+    // Find or create in to warehouse
+    const toItemIndex = toItemsCopy.findIndex(i => i.id === itemId);
+    if (toItemIndex !== -1) {
+      // Same item exists, just add stock
+      toItemsCopy[toItemIndex] = {
+        ...toItemsCopy[toItemIndex],
+        stock: toItemsCopy[toItemIndex].stock + qty
+      };
+    } else {
+      // Create new item instance in target warehouse
+      toItemsCopy.push({
+        ...itemToMove,
+        id: crypto.randomUUID(),
+        stock: qty
       });
-      const result = await response.json();
-      if (result.success) {
-        // Optimistic refresh: fetch inventory again
-        const fetchRes = await fetch(`/api/inventory/${warehouseId}`);
-        const fetchResult = await fetchRes.json();
-        if (fetchResult.success) {
-          set((state) => ({
-            inventory: { ...state.inventory, [warehouseId]: fetchResult.data },
-            isLoading: false
-          }));
-        } else {
-          set({ isLoading: false });
-        }
-      } else {
-        set({ error: result.error, isLoading: false });
-      }
-    } catch (err) {
-      console.error('adjustStock Error:', err);
-      set({ error: 'Fallo al ajustar el inventario', isLoading: false });
     }
-  },
+    
+    return {
+      inventory: {
+        ...state.inventory,
+        [fromId]: fromItemsCopy,
+        [toId]: toItemsCopy,
+      }
+    };
+  }),
   setWarehouseInventory: (warehouseId, items) => set((state) => ({
     inventory: { ...state.inventory, [warehouseId]: items }
   })),
