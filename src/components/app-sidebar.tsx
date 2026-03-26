@@ -6,13 +6,11 @@ import {
   Package, 
   Repeat, 
   BarChart3, 
-  LogOut,
   Undo2,
   ShoppingCart,
   Database,
   Users as UsersIcon,
   LifeBuoy,
-  Globe,
   Moon,
   DatabaseZap,
   ChevronRight,
@@ -32,6 +30,7 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
+import { useTheme } from "@/hooks/use-theme";
 const allMenuItems = [
   { title: "Dashboard", icon: LayoutDashboard, roles: ['admin', 'almacenero', 'operario'], active: true },
   { title: "Nuevo Pedido", icon: PlusCircle, roles: ['admin', 'almacenero', 'operario'], active: false },
@@ -51,10 +50,11 @@ export function AppSidebar(): JSX.Element {
   const setRole = useAuthStore(s => s.setRole);
   const currentWarehouseId = useAuthStore(s => s.currentWarehouseId);
   const warehouses = useAuthStore(s => s.warehouses);
+  const { toggleTheme } = useTheme();
   const activeWarehouse = warehouses.find(w => w.id === currentWarehouseId);
   const filteredItems = allMenuItems.filter(item => item.roles.includes(role));
   return (
-    <Sidebar className="border-r border-border bg-white">
+    <Sidebar className="border-r border-border bg-white dark:bg-zinc-950">
       <SidebarHeader className="h-16 flex items-center justify-between border-b px-4">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-red-600 flex items-center justify-center text-white">
@@ -91,16 +91,16 @@ export function AppSidebar(): JSX.Element {
           </SidebarMenu>
         </SidebarGroup>
         <div className="mt-auto px-4 mb-4">
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 dark:bg-zinc-900 dark:border-zinc-800 p-3">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">SIMULADOR DE PERFIL</p>
             <div className="flex flex-col gap-1.5">
-              <button onClick={() => setRole('admin')} className={cn("flex items-center gap-2 px-2 py-1.5 rounded text-[10px] font-bold uppercase transition-colors", role === 'admin' ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-100")}>
+              <button onClick={() => setRole('admin')} className={cn("flex items-center gap-2 px-2 py-1.5 rounded text-[10px] font-bold uppercase transition-colors", role === 'admin' ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-400")}>
                 <ShieldCheck className="size-3" /> Administrador
               </button>
-              <button onClick={() => setRole('almacenero')} className={cn("flex items-center gap-2 px-2 py-1.5 rounded text-[10px] font-bold uppercase transition-colors", role === 'almacenero' ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-100")}>
+              <button onClick={() => setRole('almacenero')} className={cn("flex items-center gap-2 px-2 py-1.5 rounded text-[10px] font-bold uppercase transition-colors", role === 'almacenero' ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-400")}>
                 <Wrench className="size-3" /> Almacenero
               </button>
-              <button onClick={() => setRole('operario')} className={cn("flex items-center gap-2 px-2 py-1.5 rounded text-[10px] font-bold uppercase transition-colors", role === 'operario' ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-100")}>
+              <button onClick={() => setRole('operario')} className={cn("flex items-center gap-2 px-2 py-1.5 rounded text-[10px] font-bold uppercase transition-colors", role === 'operario' ? "bg-slate-900 text-white" : "bg-white border text-slate-600 hover:bg-slate-100 dark:bg-zinc-800 dark:text-zinc-400")}>
                 <UserIcon className="size-3" /> Operario
               </button>
             </div>
@@ -128,11 +128,14 @@ export function AppSidebar(): JSX.Element {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild className="h-9 px-3 text-slate-600 hover:bg-slate-50 text-xs font-bold">
-                <a href="#" className="flex items-center gap-3">
+              <SidebarMenuButton 
+                onClick={toggleTheme}
+                className="h-9 px-3 text-slate-600 hover:bg-slate-50 text-xs font-bold w-full text-left"
+              >
+                <div className="flex items-center gap-3">
                   <Moon className="size-4 text-slate-400" />
                   <span>Modo Oscuro</span>
-                </a>
+                </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { toast } from "sonner";
 import { AppLayout } from '@/components/layout/AppLayout';
 import { 
   WelcomeCard, 
@@ -34,13 +35,14 @@ export function HomePage() {
   const currentWarehouseId = useAuthStore(s => s.currentWarehouseId);
   const warehouses = useAuthStore(s => s.warehouses);
   const setWarehouseId = useAuthStore(s => s.setWarehouseId);
-  const activeData = WAREHOUSE_DATA[currentWarehouseId ?? 'contadores'] ?? WAREHOUSE_DATA.contadores ?? { stats: {}, movement: [], operators: [] };
-  const activeWarehouse = warehouses?.find(w => w.id === currentWarehouseId);
+  const activeData = WAREHOUSE_DATA[currentWarehouseId] || WAREHOUSE_DATA.contadores;
+  const handleUpdate = () => {
+    toast.success("Datos actualizados correctamente");
+  };
   return (
     <AppLayout className="bg-slate-50/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-8 md:py-10 lg:py-12 space-y-8">
-          {/* Header Section */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="size-12 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-xl shadow-red-200">
@@ -65,7 +67,7 @@ export function HomePage() {
                     <SelectContent>
                       {warehouses?.map(w => (
                         <SelectItem key={w.id} value={w.id} className="text-xs font-bold uppercase">{w.name}</SelectItem>
-                      )) || null}
+                      )) || []}
                     </SelectContent>
                   </Select>
                 </div>
@@ -95,75 +97,68 @@ export function HomePage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <button className="bg-orange-500 hover:bg-orange-600 text-white px-5 h-9 rounded-md text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-2">
+                <button 
+                  onClick={handleUpdate}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-5 h-9 rounded-md text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-2"
+                >
                   <Filter className="size-3.5" />
                   Actualizar
                 </button>
               </div>
             </div>
           </div>
-          {/* KPI Dashboard Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Sidebar: Welcome + Restock */}
             <div className="lg:col-span-1 space-y-6">
               <WelcomeCard />
               <RestockAlertCard />
             </div>
-            {/* Main Content */}
             <div className="lg:col-span-3 space-y-6">
-              {/* Stats Row 1 */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard 
                   title="USUARIOS ACTIVOS" 
-                  value={activeData.stats?.usuarios ?? 0} 
+                  value={activeData.stats.usuarios} 
                   icon={Users} 
                   iconColor="text-blue-600 bg-blue-50"
                 />
                 <StatCard 
                   title="PEDIDOS PENDIENTES" 
-                  value={activeData.stats?.pendientes ?? 0} 
+                  value={activeData.stats.pendientes} 
                   icon={Clock} 
                   iconColor="text-orange-600 bg-orange-50"
                 />
                 <StatCard 
                   title="TOTAL DESPACHOS" 
-                  value={activeData.stats?.despachos ?? 0} 
+                  value={activeData.stats.despachos} 
                   icon={Truck} 
                   trend="+12%" 
                   trendType="positive"
                   iconColor="text-blue-600 bg-blue-50"
                 />
               </div>
-              {/* Stats Row 2 */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard 
                   title="VALOR INVENTARIO" 
-                  value={activeData.stats?.inventario ?? 0} 
+                  value={activeData.stats.inventario} 
                   icon={Package} 
                   iconColor="text-emerald-600 bg-emerald-50"
                 />
                 <StatCard 
                   title="EFECTIVIDAD" 
-                  value={activeData.stats?.efectividad ?? 0} 
+                  value={activeData.stats.efectividad} 
                   icon={TrendingUp} 
                   trend="Meta 95%"
                   iconColor="text-orange-600 bg-orange-50"
                 />
                 <StatCard 
                   title="SALIDA MENSUAL" 
-                  value={activeData.stats?.valorSalida ?? 0} 
+                  value={activeData.stats.valorSalida} 
                   icon={Wallet} 
                   iconColor="text-purple-600 bg-purple-50"
                 />
               </div>
-              {/* Charts Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <MovementChart data={activeData.movement} />
-                </div>
-                <div>
-                  <OperatorsChart data={activeData.operators} />
-                </div>
+                <MovementChart data={activeData.movement} />
+                <OperatorsChart data={activeData.operators} />
               </div>
             </div>
           </div>
