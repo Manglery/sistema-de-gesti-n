@@ -18,7 +18,7 @@ export function useWarehouseData() {
           setData(warehouseData);
           setIsLoading(false);
         }
-      } catch (err) {
+      } catch (_err) {
         if (isMounted) {
           setError('Error al cargar datos del almacén');
           setIsLoading(false);

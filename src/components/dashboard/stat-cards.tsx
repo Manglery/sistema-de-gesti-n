@@ -14,7 +14,7 @@ import { DashboardData } from "@/lib/mock-data";
 const fadeInUp = {
   initial: { opacity: 0, y: 15 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] }
+  transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }
 };
 export function WelcomeCard() {
   const userName = useAuthStore(s => s.userName);
@@ -28,9 +28,9 @@ export function WelcomeCard() {
           <Package className="w-32 h-32 rotate-12" />
         </div>
         <div className="flex items-center gap-4 relative z-10">
-          <div className="size-14 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-white font-black text-xl shadow-inner">
-            {userName.charAt(0)}
-          </div>
+            <div className="size-14 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-white font-black text-xl shadow-inner">
+              {userName.charAt(0) || 'U'}
+            </div>
           <div>
             <p className="text-[10px] text-slate-400 uppercase font-black tracking-[0.2em] mb-1">BIENVENIDO DE NUEVO</p>
             <h2 className="text-2xl font-black tracking-tight">{userName.split(' ')[0]}</h2>
