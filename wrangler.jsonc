@@ -13,5 +13,12 @@
 	},
 	"observability": {
 		"enabled": true
-	}
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "72f8ecc5-1612-4872-94d2-6c49e0ccc7bb-db",
+      "database_id": "24941842-b61d-4971-b297-be5335f54da3"
+    }
+  ]
 }
