@@ -18,20 +18,36 @@ export function useWarehouseData(month?: string, year?: string) {
         const result = await response.json();
         if (isMounted) {
           if (result.success) {
-            setData(result.data);
+            // Provide defaults for empty data scenarios
+            const dashboardData: DashboardData = {
+              stats: result.data.stats || {
+                usuarios: 0,
+                pendientes: 0,
+                despachos: 0,
+                inventario: '€0',
+                efectividad: '0%',
+                valorSalida: '€0'
+              },
+              movement: result.data.movement || [],
+              operators: result.data.operators || [],
+              alerts: result.data.alerts || []
+            };
+            setData(dashboardData);
           } else {
             setError(result.error || 'Error al cargar datos');
           }
           setIsLoading(false);
         }
-      } catch (_err) {
+      } catch (err) {
         if (isMounted) {
           setError('Error de conexión con el servidor');
           setIsLoading(false);
         }
       }
     };
-    fetchMetrics();
+    if (currentWarehouseId) {
+      fetchMetrics();
+    }
     return () => {
       isMounted = false;
     };

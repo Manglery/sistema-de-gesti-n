@@ -1,21 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useInventoryStore } from '@/store/use-inventory-store';
-import { InventoryItem } from '@/lib/inventory-data';
 export function useInventoryData() {
   const currentWarehouseId = useAuthStore(s => s.currentWarehouseId);
   const inventoryState = useInventoryStore(s => s.inventory);
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const isLoading = useInventoryStore(s => s.isLoading);
+  const fetchInventory = useInventoryStore(s => s.fetchInventory);
   useEffect(() => {
-    // In this phase, we read directly from the store which holds our "synced" local state
-    // We simulate a small delay to maintain the "fetching" feel
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setItems(inventoryState[currentWarehouseId] || []);
-      setIsLoading(false);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [currentWarehouseId, inventoryState]);
+    if (currentWarehouseId) {
+      fetchInventory(currentWarehouseId);
+    }
+  }, [currentWarehouseId, fetchInventory]);
+  const items = useMemo(() => {
+    return inventoryState[currentWarehouseId] || [];
+  }, [inventoryState, currentWarehouseId]);
   return { items, isLoading };
 }

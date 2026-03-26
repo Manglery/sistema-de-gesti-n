@@ -7,33 +7,36 @@ export interface ActivityLog {
   message: string;
   user: string;
   warehouseId: string;
-  metadata?: Record<string, any>;
+  metadata?: any;
 }
 interface ActivityState {
   logs: ActivityLog[];
-  addLog: (log: Omit<ActivityLog, 'id' | 'timestamp'>) => void;
-  clearLogs: () => void;
+  fetchLogs: (warehouseId: string) => Promise<void>;
+  addLog: (log: Omit<ActivityLog, 'id' | 'timestamp'>) => Promise<void>;
 }
 export const useActivityStore = create<ActivityState>((set) => ({
-  logs: [
-    {
-      id: 'initial-1',
-      timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-      type: 'USER_ACTION',
-      message: 'Sesión iniciada correctamente',
-      user: 'Mangler Yerren',
-      warehouseId: 'contadores'
+  logs: [],
+  fetchLogs: async (warehouseId) => {
+    try {
+      const response = await fetch(`/api/activity/${warehouseId}`);
+      const result = await response.json();
+      if (result.success) {
+        set({ logs: result.data });
+      }
+    } catch (err) {
+      console.error('Fetch logs failed', err);
     }
-  ],
-  addLog: (log) => set((state) => ({
-    logs: [
-      {
-        ...log,
-        id: crypto.randomUUID(),
-        timestamp: new Date().toISOString(),
-      },
-      ...state.logs,
-    ].slice(0, 50), // Keep last 50
-  })),
-  clearLogs: () => set({ logs: [] }),
+  },
+  addLog: async (log) => {
+    // Usually log creation is triggered by other API actions on the server
+    // But for manual UI logs if needed:
+    const newLog: ActivityLog = {
+      ...log,
+      id: crypto.randomUUID(),
+      timestamp: new Date().toISOString()
+    };
+    set((state) => ({
+      logs: [newLog, ...state.logs].slice(0, 50)
+    }));
+  }
 }));

@@ -15,20 +15,42 @@ interface AuthState {
   userName: string;
   setRole: (role: UserRole) => void;
   setWarehouseId: (id: string) => void;
-  addWarehouse: (warehouse: Warehouse) => void;
+  fetchWarehouses: () => Promise<void>;
+  addWarehouse: (warehouse: Warehouse) => Promise<void>;
 }
 export const useAuthStore = create<AuthState>((set) => ({
   role: 'admin',
   userName: 'Mangler Yerren',
   currentWarehouseId: 'contadores',
-  warehouses: [
-    { id: 'contadores', name: 'Almacén de Contadores', color: 'bg-red-600', location: 'Zona Norte, Nave A', capacity: '85%', operatorsCount: 12 },
-    { id: 'averias', name: 'Almacén de Averías', color: 'bg-orange-600', location: 'Zona Sur, Nave C', capacity: '42%', operatorsCount: 5 },
-    { id: 'acometidas', name: 'Almacén de Acometidas', color: 'bg-blue-600', location: 'Zona Este, Nave B', capacity: '68%', operatorsCount: 8 },
-  ],
+  warehouses: [],
   setRole: (role) => set({ role }),
   setWarehouseId: (currentWarehouseId) => set({ currentWarehouseId }),
-  addWarehouse: (warehouse) => set((state) => ({ 
-    warehouses: [...state.warehouses, warehouse] 
-  })),
+  fetchWarehouses: async () => {
+    try {
+      const response = await fetch('/api/warehouses');
+      const result = await response.json();
+      if (result.success) {
+        set({ warehouses: result.data });
+      }
+    } catch (err) {
+      console.error('Fetch warehouses failed', err);
+    }
+  },
+  addWarehouse: async (warehouse) => {
+    try {
+      const response = await fetch('/api/warehouses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(warehouse)
+      });
+      const result = await response.json();
+      if (result.success) {
+        set((state) => ({ 
+          warehouses: [...state.warehouses, warehouse] 
+        }));
+      }
+    } catch (err) {
+      console.error('Create warehouse failed', err);
+    }
+  },
 }));
