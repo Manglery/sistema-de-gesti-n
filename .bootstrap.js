@@ -78,7 +78,8 @@ function updateWranglerJsonc() {
 
 function runSetupCommands() {
     const commands = [
-    "bun add zustand"
+    "bun add zustand",
+    "bun add framer-motion"
 ];
     
     if (commands.length === 0) {
