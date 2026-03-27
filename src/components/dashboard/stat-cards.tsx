@@ -1,6 +1,8 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   AlertTriangle,
   Package,
@@ -30,11 +32,13 @@ export function WelcomeCard() {
         <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 via-transparent to-transparent pointer-events-none" />
         <div className="flex items-center gap-5 relative z-10">
             <div className="size-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-white font-black text-2xl shadow-inner group-hover:scale-105 transition-transform">
-              {userName.charAt(0) || 'U'}
+              {userName?.charAt(0) || 'U'}
             </div>
           <div>
             <p className="text-[10px] text-red-500 uppercase font-black tracking-[0.25em] mb-1.5">SISTEMA ACCIONA WMS</p>
-            <h2 className="text-2xl font-black tracking-tight leading-none">Hola, {userName.split(' ')[0]}</h2>
+            <h2 className="text-2xl font-black tracking-tight leading-none truncate max-w-[200px]">
+              Hola, {userName ? userName.split(' ')[0] : 'Usuario'}
+            </h2>
           </div>
         </div>
         <div className="mt-6 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm p-4 relative z-10 hover:bg-white/10 transition-colors">
@@ -42,9 +46,11 @@ export function WelcomeCard() {
             <div className="size-10 rounded-lg bg-red-600 flex items-center justify-center text-white shadow-lg shadow-red-900/50">
               <MapPin className="size-5" />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0">
               <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest leading-none mb-1">ACCESO ACTUAL</span>
-              <span className="text-sm font-bold text-white uppercase tracking-tight">{activeWarehouse?.name || 'Cargando...'}</span>
+              <span className="text-sm font-bold text-white uppercase tracking-tight truncate">
+                {activeWarehouse?.name || 'Cargando...'}
+              </span>
             </div>
           </div>
         </div>
@@ -61,6 +67,7 @@ interface StatCardProps {
   subtitle?: string;
   className?: string;
   iconColor?: string;
+  isLoading?: boolean;
 }
 export function StatCard({ 
   title, 
@@ -70,7 +77,8 @@ export function StatCard({
   trendType = 'neutral', 
   subtitle, 
   className,
-  iconColor = "text-blue-600 bg-blue-50"
+  iconColor = "text-blue-600 bg-blue-50",
+  isLoading = false
 }: StatCardProps) {
   return (
     <motion.div {...fadeInUp} className="h-full">
@@ -82,10 +90,14 @@ export function StatCard({
           </div>
         </CardHeader>
         <CardContent className="px-6 pb-6">
-          <div className="text-4xl font-black text-slate-900 tracking-tighter leading-none mb-4 truncate">{value}</div>
+          {isLoading ? (
+            <Skeleton className="h-10 w-32 mb-4" />
+          ) : (
+            <div className="text-4xl font-black text-slate-900 tracking-tighter leading-none mb-4 truncate">{value}</div>
+          )}
           {(trend || subtitle) && (
             <div className="flex items-center gap-2.5">
-              {trend && (
+              {trend && !isLoading && (
                 <span className={cn(
                   "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter",
                   trendType === 'positive' && "text-emerald-600 bg-emerald-50 border border-emerald-100",
@@ -97,6 +109,7 @@ export function StatCard({
                 </span>
               )}
               {subtitle && <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{subtitle}</span>}
+              {isLoading && <Skeleton className="h-4 w-20" />}
             </div>
           )}
         </CardContent>
@@ -104,22 +117,22 @@ export function StatCard({
     </motion.div>
   );
 }
-export function RestockAlertCard({ data }: { data: DashboardData }) {
-  const alerts = data.alerts || [];
+export function RestockAlertCard({ data, isLoading = false }: { data: DashboardData | null, isLoading?: boolean }) {
+  const alerts = data?.alerts || [];
   return (
     <motion.div {...fadeInUp} className="h-full">
       <Card className="h-full border-slate-200 shadow-sm overflow-hidden flex flex-col bg-white">
         <CardHeader className="pb-4 bg-slate-50/50 border-b px-6 pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={cn("p-2 rounded-xl", alerts.length > 0 ? "bg-red-50 text-red-600 animate-pulse" : "bg-slate-100 text-slate-400")}>
+              <div className={cn("p-2 rounded-xl", (alerts.length > 0 && !isLoading) ? "bg-red-50 text-red-600 animate-pulse" : "bg-slate-100 text-slate-400")}>
                 <AlertTriangle className="size-5" />
               </div>
               <CardTitle className="text-sm font-black text-slate-900 uppercase tracking-tight">
                 Reposición Crítica
               </CardTitle>
             </div>
-            {alerts.length > 0 && (
+            {alerts.length > 0 && !isLoading && (
               <Badge variant="destructive" className="bg-red-600 hover:bg-red-700 font-black text-[10px] px-2.5 py-1 rounded-lg border-none">
                 {alerts.length} ALERTAS
               </Badge>
@@ -127,7 +140,11 @@ export function RestockAlertCard({ data }: { data: DashboardData }) {
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1 overflow-auto max-h-[500px]">
-          {alerts.length > 0 ? (
+          {isLoading ? (
+            <div className="p-6 space-y-6">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
+            </div>
+          ) : alerts.length > 0 ? (
             <div className="divide-y divide-slate-100">
               {alerts.map((item) => (
                 <div key={item.id} className="p-6 hover:bg-slate-50 transition-colors group relative overflow-hidden">

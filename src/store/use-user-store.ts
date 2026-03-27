@@ -19,6 +19,18 @@ interface UserState {
   toggleUserStatus: (id: string) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
 }
+const toSnakeCaseUser = (user: User) => ({
+  ...user,
+  full_name: user.fullName,
+  warehouse_ids: JSON.stringify(user.warehouseIds)
+});
+
+const fromSnakeCaseUser = (data: any): User => ({
+  ...data,
+  fullName: data.full_name,
+  warehouseIds: data.warehouse_ids ? JSON.parse(data.warehouse_ids) : []
+});
+
 export const useUserStore = create<UserState>((set, get) => ({
   users: [],
   isLoading: false,
@@ -28,10 +40,11 @@ export const useUserStore = create<UserState>((set, get) => ({
       const response = await fetch('/api/users');
       const result = await response.json();
       if (result.success) {
-        set({ users: result.data ?? [], isLoading: false });
+        set({ users: (result.data ?? []).map(fromSnakeCaseUser) });
       }
     } catch (err) {
       console.error('Fetch users failed', err);
+    } finally {
       set({ isLoading: false });
     }
   },
@@ -41,26 +54,26 @@ export const useUserStore = create<UserState>((set, get) => ({
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(user)
+        body: JSON.stringify(toSnakeCaseUser(user))
       });
       const result = await response.json();
       if (result.success) {
         set((state) => ({ users: [user, ...state.users] }));
+      } else {
+        throw new Error(result.error || 'Failed to add user');
       }
     } catch (err) {
       console.error('Add user failed', err);
+      throw err;
     } finally {
       set({ isLoading: false });
     }
   },
   toggleUserStatus: async (id) => {
-    set({ isLoading: true });
     const user = get().users.find(u => u.id === id);
-    if (!user) {
-      set({ isLoading: false });
-      return;
-    }
+    if (!user) return;
     const newStatus = user.status === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+    set({ isLoading: true });
     try {
       const response = await fetch(`/api/users/${id}`, {
         method: 'PUT',
@@ -68,9 +81,15 @@ export const useUserStore = create<UserState>((set, get) => ({
         body: JSON.stringify({ status: newStatus })
       });
       const result = await response.json();
-      if (result.success) {
+      if (result.success && result.data) {
+        const updatedUser = fromSnakeCaseUser(result.data);
         set((state) => ({
-          users: state.users.map(u => u.id === id ? { ...u, status: newStatus } : u)
+          users: state.users.map(u => u.id === id ? updatedUser : u)
+        }));
+      } else {
+        // Fallback to optimistic update
+        set((state) => ({
+          users: state.users.map(u => u.id === id ? { ...u, status: newStatus as UserStatus } : u)
         }));
       }
     } catch (err) {
