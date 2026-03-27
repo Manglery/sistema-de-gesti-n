@@ -10,6 +10,8 @@ export interface User {
   status: UserStatus;
   lastAccess: string;
   warehouseIds: string[];
+  employeeId: string;
+  phone: string;
 }
 interface UserState {
   users: User[];
@@ -20,17 +22,28 @@ interface UserState {
   deleteUser: (id: string) => Promise<void>;
 }
 const toSnakeCaseUser = (user: User) => ({
-  ...user,
+  id: user.id,
+  username: user.username,
   full_name: user.fullName,
-  warehouse_ids: JSON.stringify(user.warehouseIds)
+  email: user.email,
+  role: user.role,
+  status: user.status,
+  warehouse_ids: JSON.stringify(user.warehouseIds),
+  employee_id: user.employeeId,
+  phone: user.phone
 });
-
 const fromSnakeCaseUser = (data: any): User => ({
-  ...data,
+  id: data.id,
+  username: data.username,
   fullName: data.full_name,
-  warehouseIds: data.warehouse_ids ? JSON.parse(data.warehouse_ids) : []
+  email: data.email,
+  role: data.role,
+  status: data.status,
+  lastAccess: data.last_access || '-',
+  warehouseIds: data.warehouse_ids ? JSON.parse(data.warehouse_ids) : [],
+  employeeId: data.employee_id || '-',
+  phone: data.phone || '-'
 });
-
 export const useUserStore = create<UserState>((set, get) => ({
   users: [],
   isLoading: false,
@@ -70,7 +83,8 @@ export const useUserStore = create<UserState>((set, get) => ({
     }
   },
   toggleUserStatus: async (id) => {
-    const user = get().users.find(u => u.id === id);
+    const users = get().users;
+    const user = users.find(u => u.id === id);
     if (!user) return;
     const newStatus = user.status === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
     set({ isLoading: true });
@@ -87,7 +101,6 @@ export const useUserStore = create<UserState>((set, get) => ({
           users: state.users.map(u => u.id === id ? updatedUser : u)
         }));
       } else {
-        // Fallback to optimistic update
         set((state) => ({
           users: state.users.map(u => u.id === id ? { ...u, status: newStatus as UserStatus } : u)
         }));

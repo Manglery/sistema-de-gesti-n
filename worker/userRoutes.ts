@@ -16,21 +16,23 @@ export function userRoutes(app: Hono<AppEnv>) {
     const data = (result.results || []).map((u: any) => ({
       id: u.id,
       username: u.username,
-      fullName: u.full_name,
+      full_name: u.full_name,
       email: u.email,
       role: u.role,
       status: u.status,
-      lastAccess: u.last_access || '-',
-      warehouseIds: JSON.parse(u.warehouse_ids || '[]')
+      last_access: u.last_access || '-',
+      warehouse_ids: u.warehouse_ids || '[]',
+      employee_id: u.employee_id || '-',
+      phone: u.phone || '-'
     }));
     return c.json({ success: true, data });
   });
   app.post('/api/users', async (c) => {
     const body = await c.req.json();
-    const { id, username, fullName, email, role, status, warehouseIds } = body;
+    const { id, username, full_name, email, role, status, warehouse_ids, employee_id, phone } = body;
     const result = await safeQuery(() => 
-      c.env.DB.prepare("INSERT INTO users (id, username, full_name, email, role, status, warehouse_ids) VALUES (?, ?, ?, ?, ?, ?, ?)")
-        .bind(id, username, fullName, email, role, status, JSON.stringify(warehouseIds)).run()
+      c.env.DB.prepare("INSERT INTO users (id, username, full_name, email, role, status, warehouse_ids, employee_id, phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        .bind(id, username, full_name, email, role, status, warehouse_ids, employee_id, phone).run()
     );
     if (result.error) return c.json({ success: false, error: result.message }, 500);
     return c.json({ success: true });
@@ -42,8 +44,10 @@ export function userRoutes(app: Hono<AppEnv>) {
     const values = [];
     if (body.status) { sets.push("status = ?"); values.push(body.status); }
     if (body.role) { sets.push("role = ?"); values.push(body.role); }
-    if (body.fullName) { sets.push("full_name = ?"); values.push(body.fullName); }
-    if (body.warehouseIds) { sets.push("warehouse_ids = ?"); values.push(JSON.stringify(body.warehouseIds)); }
+    if (body.full_name) { sets.push("full_name = ?"); values.push(body.full_name); }
+    if (body.warehouse_ids) { sets.push("warehouse_ids = ?"); values.push(body.warehouse_ids); }
+    if (body.employee_id) { sets.push("employee_id = ?"); values.push(body.employee_id); }
+    if (body.phone) { sets.push("phone = ?"); values.push(body.phone); }
     if (sets.length === 0) return c.json({ success: true });
     values.push(id);
     const query = `UPDATE users SET ${sets.join(", ")} WHERE id = ?`;
@@ -55,7 +59,7 @@ export function userRoutes(app: Hono<AppEnv>) {
     const result = await safeQuery(() => c.env.DB.prepare("DELETE FROM users WHERE id = ?").bind(id).run());
     return c.json({ success: !result.error });
   });
-  // --- ORDERS (TRANSACTIONAL) ---
+  // --- ORDERS ---
   app.post('/api/orders', async (c) => {
     const body = await c.req.json();
     const { id, orderNumber, warehouseId, customerName, items, createdBy } = body;
@@ -76,7 +80,7 @@ export function userRoutes(app: Hono<AppEnv>) {
       return c.json({ success: false, error: e.message }, 500);
     }
   });
-  // --- INVENTORY ADJUSTMENTS ---
+  // --- INVENTORY ---
   app.post('/api/inventory/adjust', async (c) => {
     const { warehouseId, itemId, amount, reason, user } = await c.req.json();
     try {
@@ -91,31 +95,21 @@ export function userRoutes(app: Hono<AppEnv>) {
       return c.json({ success: false, error: e.message }, 500);
     }
   });
-  // --- REPORTS ---
+  // --- DASHBOARD / REPORTS ---
+  app.get('/api/dashboard/:warehouseId', async (c) => {
+    const warehouseId = c.req.param('warehouseId');
+    // Simplified metrics for initial phase
+    return c.json({ success: true, data: null }); 
+  });
   app.get('/api/reports/:warehouseId', async (c) => {
     const warehouseId = c.req.param('warehouseId');
     try {
-      // Trends: Last 6 months of dispatches vs arrivals
-      const trends = await c.env.DB.prepare(`
-        SELECT strftime('%m', created_at) as month, 
-               COUNT(*) as despachos,
-               0 as compras
-        FROM orders 
-        WHERE warehouse_id = ? AND status = 'DISPATCHED'
-        GROUP BY month ORDER BY month DESC LIMIT 6
-      `).bind(warehouseId).all();
       const categories = await c.env.DB.prepare(`
         SELECT category as name, SUM(stock * price) as value 
         FROM inventory WHERE warehouse_id = ? 
         GROUP BY category
       `).bind(warehouseId).all();
-      return c.json({ 
-        success: true, 
-        data: {
-          monthlyTrends: trends.results || [],
-          categories: categories.results || []
-        }
-      });
+      return c.json({ success: true, data: { categories: categories.results || [] } });
     } catch (e: any) {
       return c.json({ success: false, error: e.message }, 500);
     }
