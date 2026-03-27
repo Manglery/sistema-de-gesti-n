@@ -8,7 +8,7 @@ interface InventoryState {
   adjustStock: (warehouseId: string, itemId: string, amount: number, reason: string, user: string) => Promise<void>;
   setWarehouseInventory: (warehouseId: string, items: InventoryItem[]) => void;
 }
-export const useInventoryStore = create<InventoryState>((set) => ({
+export const useInventoryStore = create<InventoryState>((set, get) => ({
   inventory: {},
   isLoading: false,
   error: null,
@@ -41,7 +41,7 @@ export const useInventoryStore = create<InventoryState>((set) => ({
       });
       const result = await response.json();
       if (result.success) {
-        // Trigger optimized refetch
+        // Refresh this warehouse inventory after successful adjustment
         const fetchRes = await fetch(`/api/inventory/${warehouseId}`);
         const fetchResult = await fetchRes.json();
         if (fetchResult.success) {
@@ -50,11 +50,9 @@ export const useInventoryStore = create<InventoryState>((set) => ({
             isLoading: false
           }));
         } else {
-          console.error('Refetch after adjustment failed');
-          set({ error: fetchResult.error || 'Error actualizando stock local', isLoading: false });
+          set({ error: 'Error actualizando vista local de stock', isLoading: false });
         }
       } else {
-        console.warn('Stock adjustment API returned failure:', result.error);
         set({ error: result.error || 'Fallo en la operación de ajuste', isLoading: false });
       }
     } catch (err) {

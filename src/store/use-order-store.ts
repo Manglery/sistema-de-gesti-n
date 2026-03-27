@@ -16,13 +16,17 @@ export const useOrderStore = create<OrderState>((set) => ({
       const response = await fetch(`/api/orders/${warehouseId}`);
       const result = await response.json();
       if (result.success) {
-        set({ orders: result.data, isLoading: false });
+        set({ orders: result.data || [], isLoading: false });
+      } else {
+        set({ orders: [], isLoading: false });
       }
     } catch (err) {
+      console.error('fetchOrders failed', err);
       set({ isLoading: false });
     }
   },
   addOrder: async (order) => {
+    set({ isLoading: true });
     try {
       const response = await fetch('/api/orders', {
         method: 'POST',
@@ -30,18 +34,31 @@ export const useOrderStore = create<OrderState>((set) => ({
         body: JSON.stringify(order)
       });
       const result = await response.json();
-      if (result.success) {
-        set((state) => ({ orders: [order, ...state.orders] }));
+      if (result.success && result.data) {
+        set((state) => ({ orders: [result.data, ...state.orders], isLoading: false }));
+      } else {
+        console.error('API creation failed');
+        set({ isLoading: false });
       }
     } catch (err) {
       console.error('Order creation failed', err);
+      set({ isLoading: false });
     }
   },
   updateOrderStatus: async (id, status) => {
-    // In a real system, we'd have a PATCH endpoint
-    // For now we update local and assume it's synced if needed or re-fetched
+    // Optimistic local update
     set((state) => ({
       orders: state.orders.map(o => o.id === id ? { ...o, status, updatedAt: new Date().toISOString() } : o)
     }));
+    // In a full implementation, we'd also call a PATCH /api/orders/:id endpoint
+    try {
+      await fetch(`/api/orders/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+    } catch (err) {
+      console.warn('Backend status update failed, local state might be ahead');
+    }
   }
 }));
