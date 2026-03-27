@@ -11,6 +11,7 @@ import '@/index.css';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useUserStore } from '@/store/use-user-store';
 import { HomePage } from '@/pages/HomePage';
+import { LoginPage } from '@/pages/LoginPage';
 import { InventoryPage } from '@/pages/InventoryPage';
 import { WarehousesPage } from '@/pages/WarehousesPage';
 import { NewOrderPage } from '@/pages/NewOrderPage';
@@ -31,7 +32,13 @@ const queryClient = new QueryClient({
   },
 });
 const router = createBrowserRouter([
-  { path: "/", element: <HomePage />, errorElement: <RouteErrorBoundary /> },
+  { 
+    path: "/", 
+    index: true, 
+    element: <LoginPage />, 
+    errorElement: <RouteErrorBoundary /> 
+  },
+  { path: "/login", element: <LoginPage />, errorElement: <RouteErrorBoundary /> },
   { path: "/new", element: <NewOrderPage />, errorElement: <RouteErrorBoundary /> },
   { path: "/dispatch", element: <DispatchPage />, errorElement: <RouteErrorBoundary /> },
   { path: "/inventory", element: <InventoryPage />, errorElement: <RouteErrorBoundary /> },
@@ -43,14 +50,27 @@ const router = createBrowserRouter([
   { path: "/users", element: <UsersPage />, errorElement: <RouteErrorBoundary /> },
   { path: "/support", element: <SupportPage />, errorElement: <RouteErrorBoundary /> },
 ]);
-function AppInitializer({ children }: { children: React.ReactNode }) {
-  const fetchWarehouses = useAuthStore(s => s.fetchWarehouses);
-  const fetchUsers = useUserStore(s => s.fetchUsers);
-  useEffect(() => {
-    fetchWarehouses();
-    fetchUsers();
-  }, []);
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated);
+  
+  if (!isAuthenticated) {
+    // Store intended location for redirect after login
+    if (window.location.pathname !== '/login') {
+      localStorage.setItem('redirectAfterLogin', window.location.pathname);
+    }
+    // RouterProvider will handle redirect via index route
+    return null;
+  }
+
   return <>{children}</>;
+}
+
+function AppInitializer({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthGuard>
+      {children}
+    </AuthGuard>
+  );
 }
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
