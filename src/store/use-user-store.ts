@@ -13,33 +13,86 @@ export interface User {
 }
 interface UserState {
   users: User[];
-  addUser: (user: User) => void;
-  updateUser: (id: string, updates: Partial<User>) => void;
-  toggleUserStatus: (id: string) => void;
-  deleteUser: (id: string) => void;
+  isLoading: boolean;
+  fetchUsers: () => Promise<void>;
+  addUser: (user: User) => Promise<void>;
+  toggleUserStatus: (id: string) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
 }
-export const useUserStore = create<UserState>((set) => ({
-  users: [
-    { id: '1', username: 'admin', fullName: 'Administrador del Sistema', email: 'admin@mrx.com', role: 'ADMIN', status: 'ACTIVO', lastAccess: '2026-03-18T15:50:17', warehouseIds: ['contadores'] },
-    { id: '2', username: 'admin2', fullName: 'admin2', email: 'jaircastillo2302@gmail.com', role: 'SUPERADMIN', status: 'ACTIVO', lastAccess: '2026-03-19T23:07:09', warehouseIds: ['contadores', 'averias'] },
-    { id: '3', username: 'admin3', fullName: 'admin-prueba-alm2', email: 'jaircastillo2302@gmail.com', role: 'ADMIN', status: 'ACTIVO', lastAccess: '2026-03-27T04:18:27', warehouseIds: ['averias'] },
-    { id: '4', username: 'adminpruebas', fullName: 'Administrador de Pruebas', email: 'adminpruebas@mrx.com', role: 'ADMIN', status: 'INACTIVO', lastAccess: '-', warehouseIds: ['contadores'] },
-    { id: '5', username: 'almacenero', fullName: 'Almacenero Principal', email: 'almacen@mrx.com', role: 'ALMACENERO', status: 'INACTIVO', lastAccess: '-', warehouseIds: ['contadores'] },
-    { id: '6', username: 'digitador', fullName: 'Ana Torres Digitadora', email: 'digitador@acciona.pe', role: 'ALMACENERO', status: 'ACTIVO', lastAccess: '-', warehouseIds: ['contadores'] },
-    { id: '7', username: 'myerren', fullName: 'Mangler Yerren', email: 'myerren@gmail.com', role: 'ADMIN', status: 'ACTIVO', lastAccess: '2026-03-26T23:47:16', warehouseIds: ['contadores', 'averias', 'acometidas'] },
-    { id: '8', username: 'operario', fullName: 'Carlos Ruiz Operario', email: 'operario@acciona.pe', role: 'ALMACENERO', status: 'ACTIVO', lastAccess: '-', warehouseIds: ['acometidas'] },
-    { id: '9', username: 'Prueba', fullName: 'Prueba Test', email: 'prueba@gmail.com', role: 'ALMACENERO', status: 'INACTIVO', lastAccess: '-', warehouseIds: ['contadores'] },
-  ],
-  addUser: (user) => set((state) => ({ 
-    users: [user, ...state.users] 
-  })),
-  updateUser: (id, updates) => set((state) => ({
-    users: state.users.map(u => u.id === id ? { ...u, ...updates } : u)
-  })),
-  toggleUserStatus: (id) => set((state) => ({
-    users: state.users.map(u => u.id === id ? { ...u, status: u.status === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO' } : u)
-  })),
-  deleteUser: (id) => set((state) => ({
-    users: state.users.filter(u => u.id !== id)
-  })),
+export const useUserStore = create<UserState>((set, get) => ({
+  users: [],
+  isLoading: false,
+  fetchUsers: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await fetch('/api/users');
+      const result = await response.json();
+      if (result.success) {
+        set({ users: result.data ?? [], isLoading: false });
+      }
+    } catch (err) {
+      console.error('Fetch users failed', err);
+      set({ isLoading: false });
+    }
+  },
+  addUser: async (user) => {
+    set({ isLoading: true });
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user)
+      });
+      const result = await response.json();
+      if (result.success) {
+        set((state) => ({ users: [user, ...state.users] }));
+      }
+    } catch (err) {
+      console.error('Add user failed', err);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  toggleUserStatus: async (id) => {
+    set({ isLoading: true });
+    const user = get().users.find(u => u.id === id);
+    if (!user) {
+      set({ isLoading: false });
+      return;
+    }
+    const newStatus = user.status === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+    try {
+      const response = await fetch(`/api/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      const result = await response.json();
+      if (result.success) {
+        set((state) => ({
+          users: state.users.map(u => u.id === id ? { ...u, status: newStatus } : u)
+        }));
+      }
+    } catch (err) {
+      console.error('Toggle status failed', err);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  deleteUser: async (id) => {
+    set({ isLoading: true });
+    try {
+      const response = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (result.success) {
+        set((state) => ({
+          users: state.users.filter(u => u.id !== id)
+        }));
+      }
+    } catch (err) {
+      console.error('Delete user failed', err);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 }));
