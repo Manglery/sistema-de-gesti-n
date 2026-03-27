@@ -36,9 +36,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       const result = await response.json();
       if (result.success) {
         set({ 
-          warehouses: result.data,
+          warehouses: result.data || [],
           lastUpdated: new Date().toISOString()
         });
+        // Default to first warehouse if none selected
+        if (result.data?.length > 0) {
+          set({ currentWarehouseId: result.data[0].id });
+        }
       }
     } catch (err) {
       console.error('Fetch warehouses failed', err);

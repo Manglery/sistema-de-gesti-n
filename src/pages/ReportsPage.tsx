@@ -11,23 +11,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart3, TrendingUp, PieChart as PieChartIcon, Calendar, FileText } from "lucide-react";
 import { useReportData } from '@/hooks/use-report-data';
 import { toast } from 'sonner';
-const COLORS = ['#ef4444', '#f97316', '#3b82f6', '#10b981', '#64748b', '#8b5cf6'];
-const monthNames: Record<string, string> = {
-  "01": "Ene", "02": "Feb", "03": "Mar", "04": "Abr",
-  "05": "May", "06": "Jun", "07": "Jul", "08": "Ago",
-  "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dic"
-};
+const COLORS = ['#ef4444', '#334155', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
 export function ReportsPage() {
-  const { data, isLoading } = useReportData();
+  const { data, isLoading, error } = useReportData();
   const handleExport = () => {
-    toast.promise(new Promise(res => setTimeout(res, 2000)), {
+    toast.promise(new Promise((resolve) => setTimeout(resolve, 2000)), {
       loading: 'Generando informe consolidado...',
       success: 'Informe exportado correctamente',
       error: 'Error al generar el informe'
     });
   };
-  const chartData = data?.monthlyTrends || [];
+  const trendData = data?.monthlyTrends || [];
   const categoryData = data?.categories || [];
+  const totalValue = data?.totalValue || '€0';
+  const rotationRate = data?.rotationRate || '0x';
+  const efficiency = data?.efficiency || '0%';
   return (
     <AppLayout className="bg-slate-50/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -68,23 +66,25 @@ export function ReportsPage() {
                     </div>
                     <div>
                       <CardTitle className="text-sm font-black uppercase tracking-tight text-slate-900">Tendencia Mensual de Despachos</CardTitle>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Comparativa de carga vs adquisición</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Órdenes finalizadas por mes</p>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-10 pb-6 px-4 sm:px-8">
-                  {isLoading ? <Skeleton className="h-[400px] w-full rounded-xl" /> : (
+                  {isLoading ? <Skeleton className="h-[400px] w-full rounded-xl" /> : error ? (
+                    <div className="h-[450px] flex flex-col items-center justify-center text-slate-500">
+                      <FileText className="size-12 mb-4 opacity-50" />
+                      <p className="text-lg font-semibold">Error cargando tendencias</p>
+                      <p className="text-sm mt-1">{error.message || 'Inténtalo de nuevo'}</p>
+                    </div>
+                  ) : (
                     <div className="h-[450px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <AreaChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                           <defs>
                             <linearGradient id="colorDespachos" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1}/>
                               <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                            </linearGradient>
-                            <linearGradient id="colorCompras" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#334155" stopOpacity={0.1}/>
-                              <stop offset="95%" stopColor="#334155" stopOpacity={0}/>
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -92,19 +92,15 @@ export function ReportsPage() {
                             dataKey="month" 
                             axisLine={false} 
                             tickLine={false} 
-                            tickFormatter={(val) => monthNames[val] || val}
                             tick={{ fontSize: 10, fontWeight: 800, fill: '#94a3b8' }} 
                             dy={10}
                           />
                           <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 800, fill: '#94a3b8' }} />
                           <Tooltip 
-                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)', padding: '12px' }} 
+                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', padding: '12px' }} 
                             itemStyle={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase' }}
-                            labelStyle={{ marginBottom: '4px', fontSize: '10px', color: '#94a3b8', fontWeight: '800' }}
                           />
                           <Area type="monotone" dataKey="despachos" name="Despachos" stroke="#ef4444" fillOpacity={1} fill="url(#colorDespachos)" strokeWidth={4} />
-                          <Area type="monotone" dataKey="compras" name="Compras" stroke="#334155" fillOpacity={1} fill="url(#colorCompras)" strokeWidth={4} strokeDasharray="5 5" />
-                          <Legend verticalAlign="top" height={36} wrapperStyle={{ top: -20, right: 0, fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }} />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
@@ -120,11 +116,17 @@ export function ReportsPage() {
                       <div className="p-2 bg-red-50 rounded-xl">
                         <PieChartIcon className="size-5 text-red-600" />
                       </div>
-                      <CardTitle className="text-sm font-black uppercase text-slate-900">Distribución por Categoría</CardTitle>
+                      <CardTitle className="text-sm font-black uppercase text-slate-900">Distribución Valorizada</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-10">
-                    {isLoading ? <Skeleton className="h-[400px] w-full rounded-xl" /> : (
+                    {isLoading ? <Skeleton className="h-[400px] w-full rounded-xl" /> : error ? (
+                      <div className="h-[400px] flex flex-col items-center justify-center text-slate-500">
+                        <PieChartIcon className="size-12 mb-4 opacity-50" />
+                        <p className="text-lg font-semibold">Error cargando categorías</p>
+                        <p className="text-sm mt-1">{error.message || 'Inténtalo de nuevo'}</p>
+                      </div>
+                    ) : (
                       <div className="h-[400px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
@@ -136,19 +138,14 @@ export function ReportsPage() {
                               outerRadius={130} 
                               paddingAngle={6} 
                               dataKey="value" 
-                              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                              label={({ name, percent }) => name && percent ? `${name} ${(percent * 100).toFixed(0)}%` : ''}
                             >
                               {categoryData.map((_: any, index: number) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(255,255,255,0.5)" strokeWidth={2} />
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                               ))}
                             </Pie>
                             <Tooltip />
-                            <Legend 
-                              layout="vertical" 
-                              verticalAlign="middle" 
-                              align="right" 
-                              wrapperStyle={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', paddingLeft: '40px' }} 
-                            />
+                            <Legend verticalAlign="bottom" height={36}/>
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
@@ -159,21 +156,23 @@ export function ReportsPage() {
                    <div className="absolute -right-20 -bottom-20 opacity-5">
                       <BarChart3 className="size-80" />
                    </div>
-                   <div className="relative z-10">
-                      <span className="text-red-500 text-[10px] font-black uppercase tracking-[0.4em] mb-4 block">Resumen de Activos</span>
-                      <h3 className="text-4xl font-black tracking-tighter leading-none mb-8">Estado de<br/>Valorización</h3>
+                   <div className="relative z-10 space-y-8">
+                      <div>
+                        <span className="text-red-500 text-[10px] font-black uppercase tracking-[0.4em] mb-4 block">Resumen Activos</span>
+                        <h3 className="text-4xl font-black tracking-tighter leading-none">Cálculo de<br/>Valorización</h3>
+                      </div>
                       <div className="space-y-6">
                         <div className="flex justify-between items-center border-b border-white/10 pb-4">
-                           <span className="text-[10px] font-black uppercase text-slate-400">Total en Almacén</span>
-                           <span className="text-xl font-black">€1.3M</span>
+                           <span className="text-[10px] font-black uppercase text-slate-400">Total Capital Inmovilizado</span>
+                           <span className="text-xl font-black">{totalValue}</span>
                         </div>
                         <div className="flex justify-between items-center border-b border-white/10 pb-4">
-                           <span className="text-[10px] font-black uppercase text-slate-400">Salida Proyectada</span>
-                           <span className="text-xl font-black text-red-500">€245K</span>
+                           <span className="text-[10px] font-black uppercase text-slate-400">Tasa de Rotación Anual</span>
+                           <span className="text-xl font-black text-red-500">{rotationRate}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                           <span className="text-[10px] font-black uppercase text-slate-400">ROI Operativo</span>
-                           <span className="text-xl font-black text-emerald-500">12.4%</span>
+                           <span className="text-[10px] font-black uppercase text-slate-400">Eficiencia Logística</span>
+                           <span className="text-xl font-black text-emerald-500">{efficiency}</span>
                         </div>
                       </div>
                    </div>

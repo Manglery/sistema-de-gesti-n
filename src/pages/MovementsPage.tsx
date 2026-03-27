@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Repeat, ArrowUpRight, ArrowDownLeft, Search, RefreshCw, AlertCircle } from "lucide-react";
+import { Repeat, ArrowUpRight, ArrowDownLeft, Search, RefreshCw, AlertCircle, ShoppingCart, Undo2 } from "lucide-react";
 import { useActivityStore } from '@/store/use-activity-store';
 import { useAuthStore } from '@/store/use-auth-store';
 import { cn } from '@/lib/utils';
@@ -18,7 +18,7 @@ export function MovementsPage() {
     if (warehouseId) {
       fetchLogs(warehouseId);
     }
-  }, [warehouseId]);
+  }, [warehouseId, fetchLogs]);
   const getTypeStyle = (type: string) => {
     switch (type) {
       case 'ORDER_DISPATCHED':
@@ -26,9 +26,13 @@ export function MovementsPage() {
       case 'STOCK_ADJUSTED':
         return { label: 'AJUSTE', color: 'bg-orange-50 text-orange-600', icon: AlertCircle };
       case 'ORDER_CREATED':
-        return { label: 'REGISTRO', color: 'bg-blue-50 text-blue-600', icon: RefreshCw };
+        return { label: 'PEDIDO', color: 'bg-blue-50 text-blue-600', icon: Repeat };
+      case 'PURCHASE_RECEIVED':
+        return { label: 'COMPRA', color: 'bg-emerald-50 text-emerald-600', icon: ShoppingCart };
+      case 'RETURN_PROCESSED':
+        return { label: 'DEVOLUCIÓN', color: 'bg-purple-50 text-purple-600', icon: Undo2 };
       default:
-        return { label: 'ENTRADA', color: 'bg-emerald-50 text-emerald-600', icon: ArrowDownLeft };
+        return { label: 'SISTEMA', color: 'bg-slate-50 text-slate-600', icon: ArrowDownLeft };
     }
   };
   return (
@@ -42,19 +46,19 @@ export function MovementsPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight leading-none">Movimientos (Kardex)</h1>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">AUDITORÍA COMPLETA DE TRANSACCIONES</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">AUDITORÍA COMPLETA DE TRANSACCIONES DEL ALMACÉN</p>
               </div>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-slate-200">
               <RefreshCw className="size-4 text-slate-400" />
-              <span className="text-[10px] font-black uppercase text-slate-500">Sincronizado: {new Date().toLocaleTimeString()}</span>
+              <span className="text-[10px] font-black uppercase text-slate-500">Registro en Tiempo Real</span>
             </div>
           </div>
           <Card className="border-slate-200 shadow-sm overflow-hidden">
             <CardHeader className="bg-white border-b p-4">
               <div className="relative max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                <Input placeholder="Filtrar por código de material..." className="pl-10 h-10 border-slate-200 text-xs font-bold uppercase" />
+                <Input placeholder="Filtrar movimientos..." className="pl-10 h-10 border-slate-200 text-xs font-bold uppercase" />
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -62,9 +66,9 @@ export function MovementsPage() {
                 <TableHeader className="bg-slate-50">
                   <TableRow className="border-slate-100">
                     <TableHead className="text-[10px] font-black text-slate-400 uppercase py-4 pl-6">Fecha & Hora</TableHead>
-                    <TableHead className="text-[10px] font-black text-slate-400 uppercase py-4">Tipo Operación</TableHead>
-                    <TableHead className="text-[10px] font-black text-slate-400 uppercase py-4">Descripción del Suceso</TableHead>
-                    <TableHead className="text-[10px] font-black text-slate-400 uppercase py-4">Usuario Responsable</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase py-4">Tipo</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase py-4">Descripción</TableHead>
+                    <TableHead className="text-[10px] font-black text-slate-400 uppercase py-4">Responsable</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -73,7 +77,7 @@ export function MovementsPage() {
                     return (
                       <TableRow key={log.id} className="hover:bg-slate-50/50 border-slate-100 group">
                         <TableCell className="py-4 pl-6 text-[11px] font-bold text-slate-500 whitespace-nowrap">
-                          {format(new Date(log.timestamp), "dd/MM/yy '—' HH:mm", { locale: es })}
+                          {log.timestamp ? format(new Date(log.timestamp), "dd/MM/yy '—' HH:mm", { locale: es }) : '-'}
                         </TableCell>
                         <TableCell className="py-4">
                           <Badge className={cn("border-none shadow-none text-[9px] font-black uppercase px-2 py-0.5", style.color)}>
@@ -96,7 +100,7 @@ export function MovementsPage() {
                     <TableRow>
                       <TableCell colSpan={4} className="py-20 text-center">
                         <AlertCircle className="size-10 text-slate-200 mx-auto mb-4" />
-                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No se encontraron movimientos registrados</p>
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Cargando historial de auditoría...</p>
                       </TableCell>
                     </TableRow>
                   )}

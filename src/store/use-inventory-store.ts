@@ -8,7 +8,7 @@ interface InventoryState {
   adjustStock: (warehouseId: string, itemId: string, amount: number, reason: string, user: string) => Promise<void>;
   setWarehouseInventory: (warehouseId: string, items: InventoryItem[]) => void;
 }
-export const useInventoryStore = create<InventoryState>((set, get) => ({
+export const useInventoryStore = create<InventoryState>((set) => ({
   inventory: {},
   isLoading: false,
   error: null,
@@ -16,7 +16,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await fetch(`/api/inventory/${warehouseId}`);
-      if (!response.ok) throw new Error('Failed to fetch inventory');
+      if (!response.ok) throw new Error('Network response was not ok');
       const result = await response.json();
       if (result.success) {
         set((state) => ({
@@ -28,7 +28,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       }
     } catch (err) {
       console.error('fetchInventory Error:', err);
-      set({ error: 'Error de conexión con el servidor de inventario', isLoading: false });
+      set({ error: 'Error de conexión con el servidor', isLoading: false });
     }
   },
   adjustStock: async (warehouseId, itemId, amount, reason, user) => {
@@ -41,7 +41,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       });
       const result = await response.json();
       if (result.success) {
-        // Refresh this warehouse inventory after successful adjustment
+        // Optimistic refresh: fetch inventory again
         const fetchRes = await fetch(`/api/inventory/${warehouseId}`);
         const fetchResult = await fetchRes.json();
         if (fetchResult.success) {
@@ -50,14 +50,14 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
             isLoading: false
           }));
         } else {
-          set({ error: 'Error actualizando vista local de stock', isLoading: false });
+          set({ isLoading: false });
         }
       } else {
-        set({ error: result.error || 'Fallo en la operación de ajuste', isLoading: false });
+        set({ error: result.error, isLoading: false });
       }
     } catch (err) {
-      console.error('adjustStock Critical Error:', err);
-      set({ error: 'Fallo de red al intentar ajustar el stock', isLoading: false });
+      console.error('adjustStock Error:', err);
+      set({ error: 'Fallo al ajustar el inventario', isLoading: false });
     }
   },
   setWarehouseInventory: (warehouseId, items) => set((state) => ({
