@@ -1,6 +1,6 @@
 # Modern React + Cloudflare Workers Template
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Manglery/sistema-de-gesti-n)
 
 A production-ready full-stack template for building stunning web applications with React 18, TypeScript, Tailwind CSS, shadcn/ui components, and Cloudflare Workers backend. Features instant HMR, dark mode, animations, security headers, rate limiting, and edge deployment.
 
@@ -125,7 +125,7 @@ Deploy to Cloudflare Pages (static assets) + Workers (API) with one command:
    - Deploys Worker with `wrangler deploy`
    - Configured in `wrangler.jsonc`
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Manglery/sistema-de-gesti-n)
 
 **Custom Domain**: Update `wrangler.jsonc` and run `bun deploy`.
 
