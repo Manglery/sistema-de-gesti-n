@@ -23,22 +23,10 @@ interface AuthState {
   addWarehouse: (warehouse: Warehouse) => Promise<void>;
 }
 const getInitialSession = () => {
-  const session = localStorage.getItem('acciona_session');
-  if (session) {
+  const sessionStr = localStorage.getItem('acciona_session');
+  if (sessionStr) {
     try {
-      return JSON.parse(session);
-    } catch {
-      return null;
-    }
-  }
-  return null;
-};
-
-const getCurrentSession = () => {
-  const session = localStorage.getItem('acciona_session');
-  if (session) {
-    try {
-      return JSON.parse(session);
+      return JSON.parse(sessionStr);
     } catch {
       return null;
     }
@@ -46,7 +34,7 @@ const getCurrentSession = () => {
   return null;
 };
 const initialSession = getInitialSession();
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: !!initialSession,
   role: initialSession?.role || 'admin',
   userName: initialSession?.userName || '',
@@ -63,17 +51,29 @@ export const useAuthStore = create<AuthState>((set) => ({
       currentWarehouseId: warehouseId,
       lastUpdated: new Date().toISOString()
     });
+    // Trigger warehouse metadata fetching immediately after login
+    get().fetchWarehouses();
   },
   logout: () => {
     localStorage.removeItem('acciona_session');
-    set({ isAuthenticated: false, role: 'operario', userName: '' });
+    set({ 
+      isAuthenticated: false, 
+      role: 'operario', 
+      userName: '',
+      currentWarehouseId: '',
+      warehouses: [] 
+    });
   },
   setRole: (role) => {
     set({ role });
-    // Update local storage if authenticated
-    const session = getCurrentSession();
-    if (session) {
-      localStorage.setItem('acciona_session', JSON.stringify({ ...session, role }));
+    const sessionStr = localStorage.getItem('acciona_session');
+    if (sessionStr) {
+      try {
+        const session = JSON.parse(sessionStr);
+        localStorage.setItem('acciona_session', JSON.stringify({ ...session, role }));
+      } catch (e) {
+        console.error("Failed to update session role", e);
+      }
     }
   },
   setWarehouseId: (id) => {
@@ -81,24 +81,36 @@ export const useAuthStore = create<AuthState>((set) => ({
       currentWarehouseId: id,
       lastUpdated: new Date().toISOString()
     });
-    const session = getCurrentSession();
-    if (session) {
-      localStorage.setItem('acciona_session', JSON.stringify({ ...session, warehouseId: id }));
+    const sessionStr = localStorage.getItem('acciona_session');
+    if (sessionStr) {
+      try {
+        const session = JSON.parse(sessionStr);
+        localStorage.setItem('acciona_session', JSON.stringify({ ...session, warehouseId: id }));
+      } catch (e) {
+        console.error("Failed to update session warehouseId", e);
+      }
     }
   },
   fetchWarehouses: async () => {
+    // Avoid double fetching if we already have data in the last 5 minutes
+    const { warehouses, lastUpdated } = get();
+    const age = Date.now() - new Date(lastUpdated).getTime();
+    if (warehouses.length > 0 && age < 300000) return;
     try {
       const response = await fetch('/api/warehouses');
       const result = await response.json();
       if (result.success) {
-        set({ 
-          warehouses: result.data || [],
+        const newWarehouses = result.data || [];
+        const currentState = get();
+        const updates: any = { 
+          warehouses: newWarehouses,
           lastUpdated: new Date().toISOString()
-        });
-        // Si no hay almacen seleccionado, poner el primero
-        if (result.data?.length > 0 && !getCurrentSession()?.warehouseId) {
-          set({ currentWarehouseId: result.data[0].id });
+        };
+        // Auto-select first warehouse if none selected
+        if (newWarehouses.length > 0 && !currentState.currentWarehouseId) {
+          updates.currentWarehouseId = newWarehouses[0].id;
         }
+        set(updates);
       }
     } catch (err) {
       console.error('Fetch warehouses failed', err);

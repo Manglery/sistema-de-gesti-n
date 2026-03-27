@@ -1,6 +1,6 @@
 import '@/lib/errorReporter';
 import { enableMapSet } from "immer";
-import React, { useEffect, StrictMode } from 'react';
+import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -8,8 +8,6 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import { Toaster } from "@/components/ui/sonner";
 import '@/index.css';
-import { useAuthStore } from '@/store/use-auth-store';
-import { useUserStore } from '@/store/use-user-store';
 import { HomePage } from '@/pages/HomePage';
 import { LoginPage } from '@/pages/LoginPage';
 import { InventoryPage } from '@/pages/InventoryPage';
@@ -35,7 +33,7 @@ const router = createBrowserRouter([
   { 
     path: "/", 
     index: true, 
-    element: <LoginPage />, 
+    element: <HomePage />, 
     errorElement: <RouteErrorBoundary /> 
   },
   { path: "/login", element: <LoginPage />, errorElement: <RouteErrorBoundary /> },
@@ -50,27 +48,9 @@ const router = createBrowserRouter([
   { path: "/users", element: <UsersPage />, errorElement: <RouteErrorBoundary /> },
   { path: "/support", element: <SupportPage />, errorElement: <RouteErrorBoundary /> },
 ]);
-function AuthGuard({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore(s => s.isAuthenticated);
-  
-  if (!isAuthenticated) {
-    // Store intended location for redirect after login
-    if (window.location.pathname !== '/login') {
-      localStorage.setItem('redirectAfterLogin', window.location.pathname);
-    }
-    // RouterProvider will handle redirect via index route
-    return null;
-  }
-
-  return <>{children}</>;
-}
-
 function AppInitializer({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthGuard>
-      {children}
-    </AuthGuard>
-  );
+  // Page protection is now handled within AppLayout via redirects
+  return <>{children}</>;
 }
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

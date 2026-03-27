@@ -7,7 +7,7 @@ import { useAuthStore } from "@/store/use-auth-store";
 import { useInventoryStore } from "@/store/use-inventory-store";
 import { useOrderStore } from "@/store/use-order-store";
 import { cn } from "@/lib/utils";
-import { Search, Loader2, LogOut, UserCircle } from 'lucide-react';
+import { Search, Loader2, UserCircle } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -31,13 +31,30 @@ export function AppLayout({ children, container = true, className, contentClassN
   const role = useAuthStore(s => s.role);
   const userName = useAuthStore(s => s.userName);
   const logout = useAuthStore(s => s.logout);
+  const fetchWarehouses = useAuthStore(s => s.fetchWarehouses);
   const isInvLoading = useInventoryStore(s => s.isLoading);
+  const fetchInventory = useInventoryStore(s => s.fetchInventory);
   const isOrdersLoading = useOrderStore(s => s.isLoading);
+  const fetchOrders = useOrderStore(s => s.fetchOrders);
+  // Auth Guard
   useEffect(() => {
     if (!isAuthenticated && location.pathname !== '/login') {
-      navigate('/login');
+      navigate('/login', { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
+  // Initial Data Fetching
+  useEffect(() => {
+    if (isAuthenticated && warehouses.length === 0) {
+      fetchWarehouses();
+    }
+  }, [isAuthenticated, warehouses, fetchWarehouses]);
+  // Sync Data on Warehouse Change
+  useEffect(() => {
+    if (isAuthenticated && currentWarehouseId) {
+      fetchInventory(currentWarehouseId);
+      fetchOrders(currentWarehouseId);
+    }
+  }, [isAuthenticated, currentWarehouseId]);
   const activeWarehouse = useMemo(
     () => warehouses.find(w => w.id === currentWarehouseId),
     [warehouses, currentWarehouseId]
@@ -48,9 +65,11 @@ export function AppLayout({ children, container = true, className, contentClassN
   );
   const isSyncing = isInvLoading || isOrdersLoading;
   if (!isAuthenticated && location.pathname !== '/login') {
-    return <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <Loader2 className="size-8 text-red-600 animate-spin" />
-    </div>;
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="size-8 text-red-600 animate-spin" />
+      </div>
+    );
   }
   return (
     <SidebarProvider defaultOpen={true}>
@@ -61,8 +80,7 @@ export function AppLayout({ children, container = true, className, contentClassN
         <div className={cn(
           "h-0.5 w-full absolute top-0 left-0 right-0 z-50 transition-all duration-700", 
           accentColor,
-          isSyncing && "animate-pulse opacity-100",
-          !isSyncing && "opacity-40"
+          isSyncing ? "animate-pulse opacity-100" : "opacity-0"
         )} />
         {/* Top bar */}
         <div className="flex items-center justify-between px-8 h-16 bg-white/60 backdrop-blur-md border-b border-slate-200 z-40 sticky top-0">
@@ -92,11 +110,11 @@ export function AppLayout({ children, container = true, className, contentClassN
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 group">
-                  <div className="flex flex-col items-end hidden sm:flex">
-                    <span className="text-xs font-black text-slate-900 uppercase tracking-tight">{userName}</span>
+                  <div className="flex flex-col items-end hidden sm:flex text-right">
+                    <span className="text-xs font-black text-slate-900 uppercase tracking-tight leading-none mb-1">{userName}</span>
                     <span className="text-[9px] font-black text-red-600 uppercase tracking-widest leading-none">{role}</span>
                   </div>
-                  <div className="size-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform">
+                  <div className="size-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform overflow-hidden">
                     <UserCircle className="size-6" />
                   </div>
                 </button>
@@ -115,16 +133,15 @@ export function AppLayout({ children, container = true, className, contentClassN
                   onClick={() => { logout(); navigate('/login'); }}
                   className="rounded-lg h-10 text-xs font-black uppercase text-red-600 hover:bg-red-50 focus:bg-red-50 cursor-pointer"
                 >
-                  <LogOut className="mr-2 size-4" /> Cerrar Sesión
+                  Cerrar Sesión
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
         <main className={cn(
-          "flex-1 flex flex-col transition-opacity duration-300",
-          isSyncing ? "opacity-95" : "opacity-100",
-          container && "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+          "flex-1 flex flex-col",
+          container && "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full",
           contentClassName
         )}>
           {children}
