@@ -25,18 +25,18 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 const MESES = [
-  { value: "enero", label: "Enero" },
-  { value: "febrero", label: "Febrero" },
-  { value: "marzo", label: "Marzo" },
-  { value: "abril", label: "Abril" },
-  { value: "mayo", label: "Mayo" },
-  { value: "junio", label: "Junio" },
-  { value: "julio", label: "Julio" },
-  { value: "agosto", label: "Agosto" },
-  { value: "septiembre", label: "Septiembre" },
-  { value: "octubre", label: "Octubre" },
-  { value: "noviembre", label: "Noviembre" },
-  { value: "diciembre", label: "Diciembre" },
+  { value: "01", label: "Enero" },
+  { value: "02", label: "Febrero" },
+  { value: "03", label: "Marzo" },
+  { value: "04", label: "Abril" },
+  { value: "05", label: "Mayo" },
+  { value: "06", label: "Junio" },
+  { value: "07", label: "Julio" },
+  { value: "08", label: "Agosto" },
+  { value: "09", label: "Septiembre" },
+  { value: "10", label: "Octubre" },
+  { value: "11", label: "Noviembre" },
+  { value: "12", label: "Diciembre" },
 ];
 const ANIOS = ["2024", "2025", "2026"];
 export function HomePage() {
@@ -45,8 +45,8 @@ export function HomePage() {
   const warehouses = useAuthStore(s => s.warehouses);
   const setWarehouseId = useAuthStore(s => s.setWarehouseId);
   const logs = useActivityStore(s => s.logs);
-  const [selectedMonth, setSelectedMonth] = useState("marzo");
-  const [selectedYear, setSelectedYear] = useState("2026");
+  const [selectedMonth, setSelectedMonth] = useState("03");
+  const [selectedYear, setSelectedYear] = useState("2025");
   const { data: activeData, isLoading } = useWarehouseData(selectedMonth, selectedYear);
   if (isLoading && !activeData) {
     return (
@@ -141,7 +141,7 @@ export function HomePage() {
                 <CardContent className="p-0">
                   <div className="relative p-4 space-y-6 before:absolute before:left-6 before:top-4 before:bottom-4 before:w-[1px] before:bg-slate-100">
                     <AnimatePresence initial={false}>
-                      {logs?.slice(0, 5)?.map((log) => (
+                      {(logs ?? []).slice(0, 5).map((log) => (
                         <motion.div 
                           key={log.id} 
                           initial={{ opacity: 0, x: -10 }} 

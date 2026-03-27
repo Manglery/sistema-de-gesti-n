@@ -12,6 +12,11 @@ import { BarChart3, TrendingUp, PieChart as PieChartIcon, Calendar, FileText } f
 import { useReportData } from '@/hooks/use-report-data';
 import { toast } from 'sonner';
 const COLORS = ['#ef4444', '#f97316', '#3b82f6', '#10b981', '#64748b', '#8b5cf6'];
+const monthNames: Record<string, string> = {
+  "01": "Ene", "02": "Feb", "03": "Mar", "04": "Abr",
+  "05": "May", "06": "Jun", "07": "Jul", "08": "Ago",
+  "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dic"
+};
 export function ReportsPage() {
   const { data, isLoading } = useReportData();
   const handleExport = () => {
@@ -65,10 +70,16 @@ export function ReportsPage() {
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={chartData}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                          <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 800, fill: '#94a3b8' }} />
+                          <XAxis 
+                            dataKey="month" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tickFormatter={(val) => monthNames[val] || val}
+                            tick={{ fontSize: 9, fontWeight: 800, fill: '#94a3b8' }} 
+                          />
                           <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 800, fill: '#94a3b8' }} />
                           <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
-                          <Area type="monotone" dataKey="despachos" stroke="#ef4444" fill="#ef4444" fillOpacity={0.05} strokeWidth={3} />
+                          <Area type="monotone" dataKey="despachos" name="Despachos" stroke="#ef4444" fill="#ef4444" fillOpacity={0.05} strokeWidth={3} />
                           <Legend wrapperStyle={{ paddingTop: '20px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} />
                         </AreaChart>
                       </ResponsiveContainer>
@@ -82,7 +93,7 @@ export function ReportsPage() {
                 <CardHeader className="bg-slate-50/50 border-b">
                   <div className="flex items-center gap-2">
                     <PieChartIcon className="size-4 text-red-600" />
-                    <CardTitle className="text-xs font-black uppercase">Distribución por Categoría</CardTitle>
+                    <CardTitle className="text-xs font-black uppercase">Distribución por Valorización</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -90,11 +101,27 @@ export function ReportsPage() {
                     <div className="h-[350px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                          <Pie data={categoryData} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={8} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                            {categoryData.map((_: any, index: number) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                          <Pie 
+                            data={categoryData} 
+                            cx="50%" 
+                            cy="50%" 
+                            innerRadius={80} 
+                            outerRadius={120} 
+                            paddingAngle={8} 
+                            dataKey="value" 
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {categoryData.map((_: any, index: number) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
                           </Pie>
                           <Tooltip />
-                          <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', paddingLeft: '20px' }} />
+                          <Legend 
+                            layout="vertical" 
+                            verticalAlign="middle" 
+                            align="right" 
+                            wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', paddingLeft: '20px' }} 
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
